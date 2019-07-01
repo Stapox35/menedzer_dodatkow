@@ -82,7 +82,9 @@ class menedzer(QWidget):
         dodajBtn4 = QPushButton("&Kontakt", self)
         dodajBtn4.setStyleSheet("width: 200px; height: 75px")
         layout3.addWidget(dodajBtn4)
+        layout3.setSpacing(32)
         layout2.addLayout(layout3)
+        
         layoutV.addLayout(layout2)
         napis2 = QLabel(self)
         napis2.setText("Copyright © 2019 stapox ")
@@ -145,6 +147,10 @@ class menedzer(QWidget):
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
             self.funkcja1()
+        if nadawca.text() == "O &zespole":
+            #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
+            self.clearLayout(layoutV)
+            self.funkcja2()
         if nadawca.text() == "&Home":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
@@ -162,7 +168,6 @@ class menedzer(QWidget):
 
     def funkcja1(self):
         layout = QHBoxLayout()
-        
         dodajBtn = QPushButton("&Home", self)
         dodajBtn.setStyleSheet("width: 100px; height: 75px;")
         layout.addWidget(dodajBtn)
@@ -178,18 +183,10 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-        
         napis = QLabel(self)
         napis.setText("Menedżer nieoficjalnych dodatków")
         napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
         napis.move(400, 25)
-
-
-            
-                
-       
-
-
 
         layout.addWidget(napis)
 
@@ -231,7 +228,7 @@ class menedzer(QWidget):
                 flagaoprojekcie = True
                 #print("rozpoczalem_wydzielac")
         
-        print(textpl[5:len(textpl)-2])
+       #print(textpl[5:len(textpl)-2])
 
         napisPL = QLabel(self)
         napisPL.setText(textpl[5:len(textpl)-1])
@@ -250,6 +247,88 @@ class menedzer(QWidget):
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
+
+    def funkcja2(self):
+        layout = QHBoxLayout()
+        dodajBtn = QPushButton("&Home", self)
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        layout.addWidget(dodajBtn)
+        dodajBtn.clicked.connect(self.dzialanie)
+
+        label = QLabel(self)
+        url = globalURL+"img/logo_maszyna.gif"  
+        data = urlopen(url).read()
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        pixmap2 = pixmap.scaled(251, 70)
+        label.setPixmap(pixmap2)
+        label.move(20,15)
+        layout.addWidget(label)
+
+        napis = QLabel(self)
+        napis.setText("Menedżer nieoficjalnych dodatków")
+        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        napis.move(400, 25)
+
+        layout.addWidget(napis)
+
+        layoutV.addLayout(layout)
+
+        layout2 = QHBoxLayout()
+
+        zdjecie = QLabel(self)
+        url2 = globalURL+"img/skrin-o-zespole.jpg"
+        data =  urlopen(url2).read()
+        pixmap3 = QPixmap()
+        pixmap3.loadFromData(data)
+        #  pixmap4 = pixmap3.scaled(755, 425)
+        zdjecie.setPixmap(pixmap3)
+        zdjecie.move(0,125)
+        
+        layout3 = QHBoxLayout()
+        layout3.setDirection(2)
+
+        napis5 = QLabel(self)
+        napis5.setText("O Zespole")
+        napis5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
+        layout3.addWidget(napis5)
+
+        response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
+        data = response.text
+        data = data.replace('\n', ' ')
+        i = 0
+        flagaoprojekcie = False
+        text = data.split(' ')
+        textpl = ""
+        for s in text:
+            if flagaoprojekcie:
+                if s == "[KONT]":
+                    flagaoprojekcie = False
+                    break
+                textpl = textpl+' '+s
+            if s == "[OZ]":
+                flagaoprojekcie = True
+                #print("rozpoczalem_wydzielac")
+        
+        #print(textpl[5:len(textpl)-2])
+
+        napisPL = QLabel(self)
+        napisPL.setText(textpl[5:len(textpl)-1])
+        napisPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        napisPL.setWordWrap(True)
+        layout3.addWidget(napisPL)
+        layout2.addLayout(layout3)
+        layout2.addWidget(zdjecie)
+        
+        layoutV.addLayout(layout2)
+
+        napis2 = QLabel(self)
+        napis2.setText("Copyright © 2019 stapox ")
+        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        layoutpomocniczy = QHBoxLayout()
+        layoutpomocniczy.addWidget(napis2)
+        #layoutpomocniczy.addSpacing(50)
+        layoutV.addLayout(layoutpomocniczy)
 if __name__ == '__main__':
     import sys
 
