@@ -5,25 +5,29 @@ from PyQt5.QtGui import QPainter, QColor, QPolygon, QPixmap, QIcon, QImage
 from PyQt5.QtCore import QPoint, QRect, QSize
 from urllib import *
 from urllib.request import urlopen
+import requests
 
 globalURL= "http://stapox.cal24.pl/"
 
+flagamiejsca = 0
 
 class menedzer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.interfejs()
-
+    global layoutOM1, layoutV
+    layoutOM1 = QVBoxLayout()
+    layoutV = QVBoxLayout()
     def interfejs(self):
         
-
-       
-
-        layoutV = QVBoxLayout()
         layoutV.setDirection(2)
-
        
+       
+            
+       
+
+            
         layout = QHBoxLayout()
         
         label = QLabel(self)
@@ -36,13 +40,14 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-       
+        
         napis = QLabel(self)
         napis.setText("Menedżer nieoficjalnych dodatków")
         napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
         napis.move(400, 25)
 
-
+            
+                
        
 
 
@@ -66,7 +71,7 @@ class menedzer(QWidget):
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
         dodajBtn = QPushButton("&Instaluj dodatki", self)
-        dodajBtn.setStyleSheet("width: 200px; height: 75px")
+        dodajBtn.setStyleSheet("width: 200px; height: 75px;")
         layout3.addWidget(dodajBtn)
         dodajBtn2 = QPushButton("O &projekcie", self)
         dodajBtn2.setStyleSheet("width: 200px; height: 75px")
@@ -81,13 +86,20 @@ class menedzer(QWidget):
         layoutV.addLayout(layout2)
         napis2 = QLabel(self)
         napis2.setText("Copyright © 2019 stapox ")
-        napis2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center")
+        napis2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
        
+        napis3 = QLabel()
+        napis3.setText("O Projekcie")
+        napis2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
+        layoutOM1.addWidget(napis3)
+
+       
+            
 
         
         dodajBtn.clicked.connect(self.dzialanie)
@@ -118,14 +130,125 @@ class menedzer(QWidget):
         #self.setLayout(layoutV)
         self.show()
 
+    
+    
+
+
     def dzialanie(self):
 
         nadawca = self.sender()
 
+
         
 
-        if nadawca.text() == "&Instaluj dodatki":
-            QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
+        if nadawca.text() == "O &projekcie":
+            #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
+            self.clearLayout(layoutV)
+            self.funkcja1()
+        if nadawca.text() == "&Home":
+            #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
+            self.clearLayout(layoutV)
+            self.interfejs()
+    
+    def clearLayout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clearLayout(item.layout())
+
+    def funkcja1(self):
+        layout = QHBoxLayout()
+        
+        dodajBtn = QPushButton("&Home", self)
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        layout.addWidget(dodajBtn)
+        dodajBtn.clicked.connect(self.dzialanie)
+
+        label = QLabel(self)
+        url = globalURL+"img/logo_maszyna.gif"  
+        data = urlopen(url).read()
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        pixmap2 = pixmap.scaled(251, 70)
+        label.setPixmap(pixmap2)
+        label.move(20,15)
+        layout.addWidget(label)
+
+        
+        napis = QLabel(self)
+        napis.setText("Menedżer nieoficjalnych dodatków")
+        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        napis.move(400, 25)
+
+
+            
+                
+       
+
+
+
+        layout.addWidget(napis)
+
+        layoutV.addLayout(layout)
+
+        layout2 = QHBoxLayout()
+
+        zdjecie = QLabel(self)
+        url2 = globalURL+"img/skrin-o-projekcie.jpg"
+        data =  urlopen(url2).read()
+        pixmap3 = QPixmap()
+        pixmap3.loadFromData(data)
+        #  pixmap4 = pixmap3.scaled(755, 425)
+        zdjecie.setPixmap(pixmap3)
+        zdjecie.move(0,125)
+        
+        layout3 = QHBoxLayout()
+        layout3.setDirection(2)
+
+        napis5 = QLabel(self)
+        napis5.setText("O Projekcie")
+        napis5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
+        layout3.addWidget(napis5)
+
+        response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
+        data = response.text
+        data = data.replace('\n', ' ')
+        i = 0
+        flagaoprojekcie = False
+        text = data.split(' ')
+        textpl = ""
+        for s in text:
+            if flagaoprojekcie:
+                if s == "[OZ]":
+                    flagaoprojekcie = False
+                    break
+                textpl = textpl+' '+s
+            if s == "[OP]":
+                flagaoprojekcie = True
+                #print("rozpoczalem_wydzielac")
+        
+        print(textpl[5:len(textpl)-2])
+
+        napisPL = QLabel(self)
+        napisPL.setText(textpl[5:len(textpl)-1])
+        napisPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        napisPL.setWordWrap(True)
+        layout3.addWidget(napisPL)
+        layout2.addWidget(zdjecie)
+        layout2.addLayout(layout3)
+        layoutV.addLayout(layout2)
+
+        napis2 = QLabel(self)
+        napis2.setText("Copyright © 2019 stapox ")
+        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        layoutpomocniczy = QHBoxLayout()
+        layoutpomocniczy.addWidget(napis2)
+        #layoutpomocniczy.addSpacing(50)
+        layoutV.addLayout(layoutpomocniczy)
 
 if __name__ == '__main__':
     import sys
