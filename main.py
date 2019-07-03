@@ -6,7 +6,10 @@ from PyQt5.QtCore import QPoint, QRect, QSize
 from urllib import *
 from urllib.request import urlopen
 import requests
+from funkcje import sprawdzwersje
+import os
 
+sciezka_roota = os.getcwd()
 globalURL= "http://stapox.cal24.pl/"
 zmiennaCopyright = "Copyright © 2019 stapox "
 flagamiejsca = 0
@@ -159,6 +162,10 @@ class menedzer(QWidget):
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
             self.funkcja3()
+        if nadawca.text() == "&Instaluj dodatki":
+            #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
+            self.clearLayout(layoutV)
+            self.funkcja_install()
     
     def clearLayout(self, layout):
         if layout is not None:
@@ -218,7 +225,7 @@ class menedzer(QWidget):
         response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
         data = response.text
         data = data.replace('\n', ' ')
-        i = 0
+        #i = 0
         flagaoprojekcie = False
         text = data.split(' ')
         textpl = ""
@@ -424,8 +431,9 @@ class menedzer(QWidget):
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
-
-        
+    def funkcja_install(self):
+        print(sprawdzwersje(sciezka_roota, globalURL))
+        #http://stapox.cal24.pl/files/menedzer_dodatki.php
 
 if __name__ == '__main__':
     import sys
