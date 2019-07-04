@@ -214,6 +214,10 @@ class menedzer(QWidget):
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
             self.pokazwybrane(-1)
+        if nadawca.text() == "&Wróć":
+            #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
+            self.clearLayout(layoutV)
+            self.pokazwybrane(-1)
     def clearLayout(self, layout):
         if layout is not None:
             while layout.count():
@@ -305,14 +309,162 @@ class menedzer(QWidget):
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
-    def pokazszczegoly(self, iddodatku):
-        self.clearLayout(layoutV)
-        id = iddodatku
+
+    def instaluj(self, id, adres):
+        print(adres)
+
+    def pokazszczegoly(self, id):
+        
+        id = int(self.sender().text().replace("&Dowiedz się więcej i instaluj! (", "").replace(")", ""))
         print(id)
+        self.clearLayout(layoutV)
+
+
+        
+        layout = QHBoxLayout()
+        dodajBtn = QPushButton("&Wróć", self)
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        layout.addWidget(dodajBtn)
+        dodajBtn.clicked.connect(self.dzialanie)
+
+        label = QLabel(self)
+        url = globalURL+"img/logo_maszyna.gif"  
+        data = urlopen(url).read()
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        pixmap2 = pixmap.scaled(251, 70)
+        label.setPixmap(pixmap2)
+        label.move(20,15)
+        layout.addWidget(label)
+
+        napis = QLabel(self)
+        napis.setText("Menedżer nieoficjalnych dodatków")
+        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        napis.move(400, 25)
+
+        layout.addWidget(napis)
+
+        layoutV.addLayout(layout)
+
+        
+        layoutkolejny = QHBoxLayout()
+        
+        response = requests.get(globalURL+"files/menedzer_dodatki.php")
+        data = response.text
+        
+        data = data.replace("<br>", "")
+        data = data.replace("<br/>", "")
+        data = data.replace("<br />", "")
+        data = data.split(';')
+        #print(data[0])
+        formLayout = QFormLayout()
+        groupbox = QGroupBox()
+        
+        
+
+        for i in data:
+            if i == "":
+                break
+
+            frame = QFrame()
+            pomocnicza = str(i).split('$')
+
+            aktualneid = pomocnicza[0].replace(" ", "")
+            if int(aktualneid) == id:
+
+                layoutdodatek = QHBoxLayout()
+                layoutprzycisk = QHBoxLayout()
+                layoutopisy = QHBoxLayout()
+                layouttytul = QHBoxLayout()
+
+                layoutdodatek.setDirection(2)
+                
+            
+                
+                #QLabel().setPixmap(QPixmap().loadFromData(urlopen(adres).read()))
+                label = QLabel()
+                pixmap = QPixmap()
+                adres = str(globalURL+pomocnicza[4])
+                #print(adres)
+                data =  urlopen(adres).read()
+                pixmap.loadFromData(data)
+                label.setPixmap(pixmap.scaled(260,158))
+                layouttytul.addWidget(label)
+
+                tyul = QLabel(pomocnicza[1].replace("<q>", '"').replace("</q>", '"'))
+                tyul.setStyleSheet("font: 25px Times New Roman; font-weight: 800")
+                layouttytul.addWidget(tyul)
+                
+                label = QLabel()
+                pixmap = QPixmap()
+                adres = str(globalURL+pomocnicza[5])
+                data =  urlopen(adres).read()
+                pixmap.loadFromData(data)
+                label.setPixmap(pixmap.scaled(260,158))
+                
+                layouttytul.addWidget(label)
+
+                layoutdodatek.addLayout(layouttytul)
+                opis = QLabel(pomocnicza[9])
+                opis.setWordWrap(True)
+                layoutopisy.addWidget(opis)
+                
+                layoutdodatek.addLayout(layoutopisy)
+                wersja = pomocnicza[6]
+                wersja = wersja.split(" ")
+                layoutprzycisk.addWidget(QLabel(pomocnicza[6]))
+                przycisk_sprawdz_wiecej = QPushButton("&Instaluj!", self)
+                przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
+                przycisk_sprawdz_wiecej.clicked.connect(lambda: self.instaluj(id, pomocnicza[10]))
+                #TODO: do ogarnięcia, żeby id szło poprawne :P
+                #przycisk_sprawdz_wiecej.setFocusPolicy()
+                layoutprzycisk.addWidget(przycisk_sprawdz_wiecej)
+                layoutdodatek.addLayout(layoutprzycisk)
+
+                layoutenty = QHBoxLayout()
+                layoutenty.setDirection(2)
+                layoutenty.addWidget(QLabel("Autorzy: "+pomocnicza[7]))
+                layoutenty.addWidget(QLabel("Data wydania: "+pomocnicza[12]))
+
+                layoutdodatek.addLayout(layoutenty)
+
+                frame.setLayout(layoutdodatek)
+                frame.setStyleSheet("color: white")
+                aktualnyklucz = pomocnicza[2]
+                aktualnyklucz = aktualnyklucz.replace(" ", "")
+                aktualnyklucz = int(aktualnyklucz)
+
+
+                formLayout.addRow(frame)
+                break
+
+        groupbox.setLayout(formLayout)
+        scroll = QScrollArea()
+        scroll.setWidget(groupbox)
+        scroll.setWidgetResizable(True)
+        scroll.setFixedHeight(520)
+        scroll.setFixedWidth(1150)
+        scroll.horizontalScrollBar().setEnabled(False)
+
+
+
+
+
+        layoutkolejny.addWidget(scroll)
+        layoutV.addLayout(layoutkolejny)
+      
+
+        napis2 = QLabel(self)
+        napis2.setText(zmiennaCopyright)
+        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        layoutpomocniczy = QHBoxLayout()
+        layoutpomocniczy.addWidget(napis2)
+        #layoutpomocniczy.addSpacing(50)
+        layoutV.addLayout(layoutpomocniczy)
 
     def pokazwybrane(self, klucz):
         mojawersja = sprawdzwersje(sciezka_roota, globalURL)
-        print(mojawersja)
+        #print(mojawersja)
         #http://stapox.cal24.pl/files/menedzer_dodatki.php
 
         layout = QHBoxLayout()
@@ -389,9 +541,9 @@ class menedzer(QWidget):
             wersja = pomocnicza[6]
             wersja = wersja.split(" ")
             layoutprzycisk.addWidget(QLabel(pomocnicza[6]))
-            przycisk_sprawdz_wiecej = QPushButton("&Dowiedz się więcej i instaluj!", self)
-            przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
             id = int(pomocnicza[0])
+            przycisk_sprawdz_wiecej = QPushButton("&Dowiedz się więcej i instaluj! ("+str(id)+")", self)
+            przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
             przycisk_sprawdz_wiecej.clicked.connect(lambda: self.pokazszczegoly(id))
             #TODO: do ogarnięcia, żeby id szło poprawne :P
             #przycisk_sprawdz_wiecej.setFocusPolicy()
