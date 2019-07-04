@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar
 from ksztalty import Ksztalty, Ksztalt
 # from PyQt5.QtWidgets import QHBoxLayout2
 from PyQt5.QtGui import QPainter, QColor, QPolygon, QPixmap, QIcon, QImage
@@ -312,15 +312,104 @@ class menedzer(QWidget):
 
     def instaluj(self, id, adres):
         print(adres)
+        adres = adres
+        self.clearLayout(layoutV)
+        layout = QHBoxLayout()
+        dodajBtn = QPushButton("&Wróć", self)
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        layout.addWidget(dodajBtn)
+        dodajBtn.clicked.connect(lambda: self.pokazszczegoly(id))
+        label = QLabel(self)
+        url = globalURL+"img/logo_maszyna.gif"  
+        data = urlopen(url).read()
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        pixmap2 = pixmap.scaled(251, 70)
+        label.setPixmap(pixmap2)
+        label.move(20,15)
+        layout.addWidget(label)
+
+        napis = QLabel(self)
+        napis.setText("Menedżer nieoficjalnych dodatków")
+        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        napis.move(400, 25)
+
+        layout.addWidget(napis)
+
+        layoutV.addLayout(layout)
+        layoutinstalacji = QHBoxLayout()
+        layoutinstalacji.setDirection(2)
+        label = QLabel("Trwa instalowanie, proszę czekać ... ")
+        label.setStyleSheet("font: 40px Times New Roman; color: white")
+        layoutinstalacji.addWidget(label)
+        progress = QProgressBar()
+        progress.setGeometry(10,10,500,50)
+        layoutinstalacji.addWidget(progress)
+        layoutV.addLayout(layoutinstalacji)
+
+        #progress.setValue(50)
+        napis2 = QLabel(self)
+        napis2.setText(zmiennaCopyright)
+        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        layoutpomocniczy = QHBoxLayout()
+        layoutpomocniczy.addWidget(napis2)
+        #layoutpomocniczy.addSpacing(50)
+        layoutV.addLayout(layoutpomocniczy)
+
+        response = requests.get(adres)
+        data = response.text
+        progress.setValue(14.28*1)
+        download = False
+        linkacz=""
+        adrestext = ""
+        seria="x"
+        seriaflaga = False
+        textures = False
+        WpisTextures=""
+        WspTextures=""
+        for i in data.split("\n"):
+            i = i.replace("\t", "")
+            i = i.replace("\r", "")
+            i = i.replace(" ", "")
+            if download:
+                i = i.split("=")
+                linkacz = i[0]
+                download = False
+            if textures:
+                i = i.split("=")
+                adrestext = i[0]
+                seria = i[1]
+                textures = False
+            if seriaflaga:
+                if i =="":
+                    seriaflaga = False
+                if i[:1] == "!":
+                    WspTextures = i
+                else:
+                    WpisTextures = WpisTextures+str(i)+"\n"
+            if i[:10] == "[DOWNLOAD]":
+                download = True
+            if i[:14] == "[TEXTURES.TXT]":
+                textures = True
+            if i[:len(seria)+2] == "["+seria+"]":
+                seriaflaga = True
+        print(linkacz)
+        print(adrestext)
+        print(seria)
+        print(WspTextures)
+        print(WpisTextures)
+        progress.setValue(14.28*2)
+
+
 
     def pokazszczegoly(self, id):
-        
-        id = int(self.sender().text().replace("&Dowiedz się więcej i instaluj! (", "").replace(")", ""))
+        if id == 0:
+            id = int(self.sender().text().replace("&Dowiedz się więcej i instaluj! (", "").replace(")", ""))
+        else:
+            id=id
         print(id)
         self.clearLayout(layoutV)
 
-
-        
         layout = QHBoxLayout()
         dodajBtn = QPushButton("&Wróć", self)
         dodajBtn.setStyleSheet("width: 100px; height: 75px;")
@@ -544,7 +633,7 @@ class menedzer(QWidget):
             id = int(pomocnicza[0])
             przycisk_sprawdz_wiecej = QPushButton("&Dowiedz się więcej i instaluj! ("+str(id)+")", self)
             przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
-            przycisk_sprawdz_wiecej.clicked.connect(lambda: self.pokazszczegoly(id))
+            przycisk_sprawdz_wiecej.clicked.connect(lambda: self.pokazszczegoly(0))
             #TODO: do ogarnięcia, żeby id szło poprawne :P
             #przycisk_sprawdz_wiecej.setFocusPolicy()
             layoutprzycisk.addWidget(przycisk_sprawdz_wiecej)
