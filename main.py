@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar
 from ksztalty import Ksztalty, Ksztalt
 from PySide2 import QtCore, QtGui
@@ -45,6 +46,7 @@ class menedzer(QWidget):
         if flagamaszyny == False:
             QMessageBox.warning(self, "Błąd", "Przenieś menedżera do katalogu z symulatorem!", QMessageBox.Ok)
             self.destroy()
+            exit()
 
         flagapierwszegouruchamiania = False
         if not os.path.isfile(sciezka_roota+"/.config_men.ini"):
