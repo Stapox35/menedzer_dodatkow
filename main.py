@@ -9,6 +9,9 @@ import requests
 from funkcje import sprawdzwersje
 import os
 import array as arr
+from pyunpack import Archive
+import shutil
+import codecs
 
 sciezka_roota = os.getcwd()
 globalURL= "http://stapox.cal24.pl/"
@@ -25,6 +28,7 @@ class menedzer(QWidget):
     global layoutOM1, layoutV
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
+    
     def interfejs(self):
         
         layoutV.setDirection(2)
@@ -308,9 +312,81 @@ class menedzer(QWidget):
         layoutpomocniczy.addWidget(napis2)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
+    
+    def funckjainstalacji(self,adres, progress):
+        response = requests.get(adres)
+        data = response.text
+        progress.setValue(14.28*1)
+        download = False
+        linkacz=""
+        adrestext = ""
+        seria="x"
+        seriaflaga = False
+        textures = False
+        WpisTextures=""
+        WspTextures="\n"
+        for i in data.split("\n"):
+            i = i.replace("\t", "")
+            i = i.replace("\r", "")
+            i = i.replace(" ", "")
+            if download:
+                i = i.split("=")
+                linkacz = i[0]
+                download = False
+            if textures:
+                i = i.split("=")
+                adrestext = i[0]
+                seria = i[1]
+                textures = False
+            if seriaflaga:
+                if i =="":
+                    seriaflaga = False
+                if i[:1] == "!":
+                    WspTextures = i
+                else:
+                    i = str(i).replace("\n", "").replace(" ","").replace("\r\n", "").replace("\t", "").replace("\r", "")
+                    WpisTextures = WpisTextures+str(i)+"\r\n"
+            if i[:10] == "[DOWNLOAD]":
+                download = True
+            if i[:14] == "[TEXTURES.TXT]":
+                textures = True
+            if i[:len(seria)+2] == "["+seria+"]":
+                seriaflaga = True
+        print(linkacz)
+        print(adrestext)
+        print(seria)
+        print(WspTextures)
+        print(WpisTextures)
+        progress.setValue(14.28*2)
+        
+        filename = os.path.basename(linkacz)
 
+        response = requests.get(linkacz, stream=True)
+        tempSciezka = sciezka_roota+"/temp/"
+        if not os.path.exists(tempSciezka):
+            os.makedirs(tempSciezka)
+        progress.setValue(14.28*3)
+        if response.status_code == 200:
+            with open(tempSciezka+filename, 'wb') as out:
+                out.write(response.content)
+                adresArciwum = tempSciezka+filename
+                progress.setValue(14.28*4)
+        else:
+            print('Request failed: %d' % response.status_code)
+            QMessageBox.warning(self, "Błąd", "Pobieranie dodatku nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
+            self.pokazszczegoly(id)
+        Archive(adresArciwum).extractall(sciezka_roota)
+        progress.setValue(14.28*5)
+        
+        textures = open(sciezka_roota+"/"+adrestext+"/textures.txt", "a")
+        textures.write("\r\n"+WpisTextures)
+        textures.close()
 
+        progress.setValue(14.28*6)
+        shutil.rmtree(tempSciezka, ignore_errors=True)
+        progress.setValue(100)
     def instaluj(self, id, adres):
+        progress = QProgressBar()
         print(adres)
         adres = adres
         self.clearLayout(layoutV)
@@ -339,10 +415,14 @@ class menedzer(QWidget):
         layoutV.addLayout(layout)
         layoutinstalacji = QHBoxLayout()
         layoutinstalacji.setDirection(2)
+        dodajBtn = QPushButton("&Instaluj!", self)
+        dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+        layoutinstalacji.addWidget(dodajBtn)
+        dodajBtn.clicked.connect(lambda: self.funckjainstalacji(adres,progress))
         label = QLabel("Trwa instalowanie, proszę czekać ... ")
         label.setStyleSheet("font: 40px Times New Roman; color: white")
         layoutinstalacji.addWidget(label)
-        progress = QProgressBar()
+        
         progress.setGeometry(10,10,500,50)
         layoutinstalacji.addWidget(progress)
         layoutV.addLayout(layoutinstalacji)
@@ -356,51 +436,7 @@ class menedzer(QWidget):
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
-        response = requests.get(adres)
-        data = response.text
-        progress.setValue(14.28*1)
-        download = False
-        linkacz=""
-        adrestext = ""
-        seria="x"
-        seriaflaga = False
-        textures = False
-        WpisTextures=""
-        WspTextures=""
-        for i in data.split("\n"):
-            i = i.replace("\t", "")
-            i = i.replace("\r", "")
-            i = i.replace(" ", "")
-            if download:
-                i = i.split("=")
-                linkacz = i[0]
-                download = False
-            if textures:
-                i = i.split("=")
-                adrestext = i[0]
-                seria = i[1]
-                textures = False
-            if seriaflaga:
-                if i =="":
-                    seriaflaga = False
-                if i[:1] == "!":
-                    WspTextures = i
-                else:
-                    WpisTextures = WpisTextures+str(i)+"\n"
-            if i[:10] == "[DOWNLOAD]":
-                download = True
-            if i[:14] == "[TEXTURES.TXT]":
-                textures = True
-            if i[:len(seria)+2] == "["+seria+"]":
-                seriaflaga = True
-        print(linkacz)
-        print(adrestext)
-        print(seria)
-        print(WspTextures)
-        print(WpisTextures)
-        progress.setValue(14.28*2)
-
-
+        #self.funckjainstalacji(adres, progress)
 
     def pokazszczegoly(self, id):
         if id == 0:
@@ -643,13 +679,16 @@ class menedzer(QWidget):
             aktualnyklucz = pomocnicza[2]
             aktualnyklucz = aktualnyklucz.replace(" ", "")
             aktualnyklucz = int(aktualnyklucz)
-            if mojawersja != -1 and mojawersja == wersja[1] or mojawersja == -1 and aktualnyklucz == klucz or klucz == -1:
+            if mojawersja != -1 and mojawersja == wersja[1] or mojawersja == -1 and aktualnyklucz == klucz:
 
                 formLayout.addRow(frame)
                 
                 tablicazezwolen[aktualnyklucz-1] = tablicazezwolen[aktualnyklucz-1]+1
                 #print(tablicazezwolen[0])
-
+            elif mojawersja != -1 and mojawersja == wersja[1] or mojawersja == -1 and klucz == -1:
+                formLayout.addRow(frame)
+                
+                tablicazezwolen[aktualnyklucz-1] = tablicazezwolen[aktualnyklucz-1]+1
             if(aktualneid == 1):
                 break
 
