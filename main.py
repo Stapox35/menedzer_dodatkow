@@ -6,20 +6,22 @@ from PyQt5.QtCore import QPoint, QRect, QSize
 from urllib import *
 from urllib.request import urlopen
 import requests
-from funkcje import sprawdzwersje
+from funkcje import sprawdzwersje, SprawdzCzyZainstalowany,PodajDateInstalacji
 import os
 import array as arr
 from pyunpack import Archive
 import shutil
 import codecs
+import datetime
 
 sciezka_roota = os.getcwd()
 globalURL= "http://stapox.cal24.pl/"
 zmiennaCopyright = "Copyright © 2019 stapox "
 listazezwolen = [0,0,0,0,0,0,0,0,0,0,0]
 tablicazezwolen = arr.array('i', listazezwolen)
+versionMenedzer = "0.2"
 
-#tablicazezwolen = []
+
 class menedzer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -29,15 +31,63 @@ class menedzer(QWidget):
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
     
+    def config(self):
+        
+        flagapierwszegouruchamiania = False
+        if not os.path.isfile(sciezka_roota+"/.config_men.ini"):
+            flagapierwszegouruchamiania = True
+        
+        if flagapierwszegouruchamiania:
+            ini = open(sciezka_roota+"/.config_men.ini", "w+")
+            x = datetime.datetime.now()
+            ini.write("-v "+str(versionMenedzer)+"$"+str(x)+";\n")
+            ini.write("[ADDONS]\n")
+
+            response = requests.get(globalURL+"files/menedzer_dodatki.php")
+            data = response.text
+            
+            data = data.replace("<br>", "")
+            data = data.replace("<br/>", "")
+            data = data.replace("<br />", "")
+            data = data.split(';')
+
+            for i in data:
+          
+                pomocnicza = i.split("$")
+                aktualneid = int(pomocnicza[0])
+                adresRI = pomocnicza[10]
+                flagaweryfikacji = False
+                response = requests.get(adresRI)
+                dataRI = response.text
+                flagategoid=True
+                for o in dataRI.split('\n'):
+                    o=o.replace("\r", "").replace(" ", "").replace("\t", "")
+                    if flagaweryfikacji:
+                        if o =="":
+                            flagaweryfikacji = False
+                        path = o.split("=")[0]
+                        if path != "":
+                            path = path.replace('\\', "/")
+                            #print(sciezka_roota+"/"+path)
+                            if not os.path.isfile(sciezka_roota+"/"+path):
+                                flagategoid = False
+                               
+                            
+                            
+                    if o[:8] == "[VERIFY]":
+                        flagaweryfikacji = True
+                if flagategoid == True:
+                    ini.write("-a "+str(aktualneid)+"$"+str(1)+"$"+str(x)+";\n")
+                if aktualneid == 1:
+                    break
+            ini.close()
+
     def interfejs(self):
         
         layoutV.setDirection(2)
-       
-       
-            
-       
+        
+        
 
-            
         layout = QHBoxLayout()
         
         label = QLabel(self)
@@ -99,8 +149,14 @@ class menedzer(QWidget):
         napis2 = QLabel(self)
         napis2.setText(zmiennaCopyright)
         napis2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
+
+        
+        
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
@@ -141,9 +197,9 @@ class menedzer(QWidget):
 
         #self.setLayout(layoutV)
         self.show()
-
+        self.config()
     
-    
+   
 
 
     def dzialanie(self):
@@ -310,10 +366,13 @@ class menedzer(QWidget):
         napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
     
-    def funckjainstalacji(self,adres, progress):
+    def funckjainstalacji(self,adres, progress, Button,id):
         response = requests.get(adres)
         data = response.text
         progress.setValue(14.28*1)
@@ -385,6 +444,13 @@ class menedzer(QWidget):
         progress.setValue(14.28*6)
         shutil.rmtree(tempSciezka, ignore_errors=True)
         progress.setValue(100)
+        Button.setDisabled(True)
+        ini = open(sciezka_roota+"/.config_men.ini", "a")
+        x = datetime.datetime.now()
+        ini.write("-a "+str(id)+"$"+str(1)+"$"+str(x)+";\n")
+        ini.close()
+        QMessageBox.information(self, "Zainstalowano", "Wybrany dodatek został zainstalowany!", QMessageBox.Ok)
+        self.pokazszczegoly(id)
     def instaluj(self, id, adres):
         progress = QProgressBar()
         print(adres)
@@ -418,7 +484,7 @@ class menedzer(QWidget):
         dodajBtn = QPushButton("&Instaluj!", self)
         dodajBtn.setStyleSheet("width: 100px; height: 50px;")
         layoutinstalacji.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(lambda: self.funckjainstalacji(adres,progress))
+        dodajBtn.clicked.connect(lambda: self.funckjainstalacji(adres,progress,dodajBtn,id))
         label = QLabel("Trwa instalowanie, proszę czekać ... ")
         label.setStyleSheet("font: 40px Times New Roman; color: white")
         layoutinstalacji.addWidget(label)
@@ -433,6 +499,9 @@ class menedzer(QWidget):
         napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
@@ -538,11 +607,16 @@ class menedzer(QWidget):
                 wersja = pomocnicza[6]
                 wersja = wersja.split(" ")
                 layoutprzycisk.addWidget(QLabel(pomocnicza[6]))
+               
+                    
                 przycisk_sprawdz_wiecej = QPushButton("&Instaluj!", self)
                 przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
                 przycisk_sprawdz_wiecej.clicked.connect(lambda: self.instaluj(id, pomocnicza[10]))
                 #TODO: do ogarnięcia, żeby id szło poprawne :P
                 #przycisk_sprawdz_wiecej.setFocusPolicy()
+                if SprawdzCzyZainstalowany(sciezka_roota, id):
+                    przycisk_sprawdz_wiecej.setDisabled(True)
+                    przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #808080; color: white")
                 layoutprzycisk.addWidget(przycisk_sprawdz_wiecej)
                 layoutdodatek.addLayout(layoutprzycisk)
 
@@ -550,7 +624,9 @@ class menedzer(QWidget):
                 layoutenty.setDirection(2)
                 layoutenty.addWidget(QLabel("Autorzy: "+pomocnicza[7]))
                 layoutenty.addWidget(QLabel("Data wydania: "+pomocnicza[12]))
-
+                if SprawdzCzyZainstalowany(sciezka_roota, id):
+                    #string = PodajDateInstalacji(sciezka_roota, id)
+                    layoutenty.addWidget(QLabel("Data instalacji: "+str(PodajDateInstalacji(sciezka_roota, id))))
                 layoutdodatek.addLayout(layoutenty)
 
                 frame.setLayout(layoutdodatek)
@@ -584,6 +660,9 @@ class menedzer(QWidget):
         napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
@@ -789,6 +868,9 @@ class menedzer(QWidget):
         napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
@@ -871,6 +953,9 @@ class menedzer(QWidget):
         napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
@@ -961,6 +1046,9 @@ class menedzer(QWidget):
         napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
         layoutpomocniczy = QHBoxLayout()
         layoutpomocniczy.addWidget(napis2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 

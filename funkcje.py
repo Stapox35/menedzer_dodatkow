@@ -47,3 +47,27 @@ Klucze
 11-wagony motorowe
 '''
 
+def SprawdzCzyZainstalowany(root, id):
+    path = root+"/.config_men.ini"
+    ini = open(path, "r")
+    for linijka in ini.readlines():
+        linijka = linijka.replace("\n", "")
+        if linijka[:2] == "-a":
+            wpiszrodlowy = linijka[3:]
+            id1 = int(wpiszrodlowy.split("$")[0])
+            if id1 == int(id):
+                if int(wpiszrodlowy.split("$")[1]) == 1:
+                    return True #zablokowane
+    return False 
+
+def PodajDateInstalacji(root, id):
+    path = root+"/.config_men.ini"
+    ini = open(path, "r")
+    for linijka in ini.readlines():
+        linijka = linijka.replace("\n", "")
+        if linijka[:2] == "-a":
+            wpiszrodlowy = linijka[3:]
+            id1 = int(wpiszrodlowy.split("$")[0])
+            if id1 == int(id):
+                return str(wpiszrodlowy.split("$")[2]).replace(";", "")
+
