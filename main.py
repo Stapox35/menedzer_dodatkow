@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar
 from ksztalty import Ksztalty, Ksztalt
+from PySide2 import QtCore, QtGui
 # from PyQt5.QtWidgets import QHBoxLayout2
 from PyQt5.QtGui import QPainter, QColor, QPolygon, QPixmap, QIcon, QImage
 from PyQt5.QtCore import QPoint, QRect, QSize
@@ -32,27 +33,34 @@ class menedzer(QWidget):
     layoutV = QVBoxLayout()
     
     def config(self):
+        print(sciezka_roota)
+        flagamaszyny = True
+        if not os.path.isdir(sciezka_roota+"/dynamic"):
+            flagamaszyny = False
+        if not os.path.isdir(sciezka_roota+"/textures"):
+            flagamaszyny = False
+        if not os.path.isdir(sciezka_roota+"/scenery"):
+            flagamaszyny = False
         
+        if flagamaszyny == False:
+            QMessageBox.warning(self, "Błąd", "Przenieś menedżera do katalogu z symulatorem!", QMessageBox.Ok)
+            self.destroy()
+
         flagapierwszegouruchamiania = False
         if not os.path.isfile(sciezka_roota+"/.config_men.ini"):
             flagapierwszegouruchamiania = True
-        
         if flagapierwszegouruchamiania:
             ini = open(sciezka_roota+"/.config_men.ini", "w+")
             x = datetime.datetime.now()
             ini.write("-v "+str(versionMenedzer)+"$"+str(x)+";\n")
             ini.write("[ADDONS]\n")
-
             response = requests.get(globalURL+"files/menedzer_dodatki.php")
             data = response.text
-            
             data = data.replace("<br>", "")
             data = data.replace("<br/>", "")
             data = data.replace("<br />", "")
             data = data.split(';')
-
             for i in data:
-          
                 pomocnicza = i.split("$")
                 aktualneid = int(pomocnicza[0])
                 adresRI = pomocnicza[10]
@@ -70,10 +78,7 @@ class menedzer(QWidget):
                             path = path.replace('\\', "/")
                             #print(sciezka_roota+"/"+path)
                             if not os.path.isfile(sciezka_roota+"/"+path):
-                                flagategoid = False
-                               
-                            
-                            
+                                flagategoid = False  
                     if o[:8] == "[VERIFY]":
                         flagaweryfikacji = True
                 if flagategoid == True:
@@ -81,7 +86,6 @@ class menedzer(QWidget):
                 if aktualneid == 1:
                     break
             ini.close()
-
     def interfejs(self):
         
         layoutV.setDirection(2)
@@ -449,6 +453,8 @@ class menedzer(QWidget):
         x = datetime.datetime.now()
         ini.write("-a "+str(id)+"$"+str(1)+"$"+str(x)+";\n")
         ini.close()
+        response = requests.get(globalURL+"files/menedzer_dodaj.php?id="+str(id))
+        data = response.text
         QMessageBox.information(self, "Zainstalowano", "Wybrany dodatek został zainstalowany!", QMessageBox.Ok)
         self.pokazszczegoly(id)
     def instaluj(self, id, adres):
