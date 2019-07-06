@@ -701,6 +701,7 @@ class menedzer(QWidget):
         layoutV.addLayout(layoutpomocniczy)
 
     def pokazwybrane(self, klucz):
+        sciezka_roota = PodajSciezkeSymulatora()
         mojawersja = sprawdzwersje(sciezka_roota, globalURL)
         #print(mojawersja)
         #http://stapox.cal24.pl/files/menedzer_dodatki.php
