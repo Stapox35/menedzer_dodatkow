@@ -48,6 +48,7 @@ Klucze
 '''
 
 def SprawdzCzyZainstalowany(root, id):
+    root = os.getcwd()
     path = root+"/.config_men.ini"
     ini = open(path, "r")
     for linijka in ini.readlines():
@@ -61,6 +62,7 @@ def SprawdzCzyZainstalowany(root, id):
     return False 
 
 def PodajDateInstalacji(root, id):
+    root = os.getcwd()
     path = root+"/.config_men.ini"
     ini = open(path, "r")
     for linijka in ini.readlines():
@@ -71,3 +73,13 @@ def PodajDateInstalacji(root, id):
             if id1 == int(id):
                 return str(wpiszrodlowy.split("$")[2]).replace(";", "")
 
+def PodajSciezkeSymulatora():
+    root = os.getcwd()
+    path = root+"/.config_men.ini"
+    ini = open(path, "r")
+    for linijka in ini.readlines():
+        linijka = linijka.replace("\n", "")
+        if linijka[:2] == "-p":
+            path = linijka[3:]
+            path = path.replace(";", "")
+            return path

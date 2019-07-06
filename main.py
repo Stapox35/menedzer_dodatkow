@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar, QFileDialog
 from ksztalty import Ksztalty, Ksztalt
-from PySide2 import QtCore, QtGui
 # from PyQt5.QtWidgets import QHBoxLayout2
 from PyQt5.QtGui import QPainter, QColor, QPolygon, QPixmap, QIcon, QImage
 from PyQt5.QtCore import QPoint, QRect, QSize
 from urllib import *
 from urllib.request import urlopen
 import requests
-from funkcje import sprawdzwersje, SprawdzCzyZainstalowany,PodajDateInstalacji
+from funkcje import sprawdzwersje, SprawdzCzyZainstalowany,PodajDateInstalacji, PodajSciezkeSymulatora
 import os
 import array as arr
 from pyunpack import Archive
@@ -16,13 +15,15 @@ import shutil
 import codecs
 import datetime
 
-sciezka_roota = os.getcwd()
+
+sciezka_roota = ""
+sciezka_roota_programu = os.getcwd()
 globalURL= "http://stapox.cal24.pl/"
 zmiennaCopyright = "Copyright © 2019 stapox "
 listazezwolen = [0,0,0,0,0,0,0,0,0,0,0]
 tablicazezwolen = arr.array('i', listazezwolen)
 versionMenedzer = "0.2"
-
+sciezka_roota = ""
 
 class menedzer(QWidget):
     def __init__(self, parent=None):
@@ -32,28 +33,29 @@ class menedzer(QWidget):
     global layoutOM1, layoutV
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
-    
+   
+    sciezka_roota_programu = os.getcwd()
     def config(self):
-        print(sciezka_roota)
-        flagamaszyny = True
-        if not os.path.isdir(sciezka_roota+"/dynamic"):
-            flagamaszyny = False
-        if not os.path.isdir(sciezka_roota+"/textures"):
-            flagamaszyny = False
-        if not os.path.isdir(sciezka_roota+"/scenery"):
-            flagamaszyny = False
-        
-        if flagamaszyny == False:
-            QMessageBox.warning(self, "Błąd", "Przenieś menedżera do katalogu z symulatorem!", QMessageBox.Ok)
-            self.destroy()
-            exit()
+        print(sciezka_roota_programu)
 
         flagapierwszegouruchamiania = False
-        if not os.path.isfile(sciezka_roota+"/.config_men.ini"):
+        if not os.path.isfile(sciezka_roota_programu+"/.config_men.ini"):
             flagapierwszegouruchamiania = True
         if flagapierwszegouruchamiania:
-            ini = open(sciezka_roota+"/.config_men.ini", "w+")
+            name = QFileDialog.getOpenFileUrl(self, "Podaj ścieżkę do symulatora!")
+            if str(name) == "(PyQt5.QtCore.QUrl(''), '')":
+                self.destroy()
+                exit()
+            pathrobocza = (str(str(name).split("'")[1][7:]).split("/"))
+            sciezka_roota_robocza=""
+            for i in range(len(pathrobocza)-1):
+                #print(i)
+                sciezka_roota_robocza = sciezka_roota_robocza+pathrobocza[i]+"/"
+            print(sciezka_roota_robocza)
+            sciezka_roota = sciezka_roota_robocza
+            ini = open(sciezka_roota_programu+"/.config_men.ini", "w+")
             x = datetime.datetime.now()
+            ini.write("-p "+str(sciezka_roota)+";\n")
             ini.write("-v "+str(versionMenedzer)+"$"+str(x)+";\n")
             ini.write("[ADDONS]\n")
             response = requests.get(globalURL+"files/menedzer_dodatki.php")
@@ -88,6 +90,27 @@ class menedzer(QWidget):
                 if aktualneid == 1:
                     break
             ini.close()
+        sciezka_roota = PodajSciezkeSymulatora()
+        flagamaszyny = True
+        if not os.path.isdir(sciezka_roota+"/dynamic"):
+            flagamaszyny = False
+        if not os.path.isdir(sciezka_roota+"/textures"):
+            flagamaszyny = False
+        if not os.path.isdir(sciezka_roota+"/scenery"):
+            flagamaszyny = False
+        
+        if flagamaszyny == False:
+            QMessageBox.warning(self, "Błąd", "Skonfiguruj jeszcze raz program!", QMessageBox.Ok)
+            os.remove(sciezka_roota_programu+"/.config_men.ini")
+            #print(name)
+           
+            self.config()
+            '''exit
+            self.destroy()
+            exit()
+            '''
+        #print(sciezka_roota_programu)
+        print(sciezka_roota)
     def interfejs(self):
         
         layoutV.setDirection(2)
@@ -379,6 +402,7 @@ class menedzer(QWidget):
         layoutV.addLayout(layoutpomocniczy)
     
     def funckjainstalacji(self,adres, progress, Button,id):
+        sciezka_roota = PodajSciezkeSymulatora()
         response = requests.get(adres)
         data = response.text
         progress.setValue(14.28*1)
@@ -451,7 +475,7 @@ class menedzer(QWidget):
         shutil.rmtree(tempSciezka, ignore_errors=True)
         progress.setValue(100)
         Button.setDisabled(True)
-        ini = open(sciezka_roota+"/.config_men.ini", "a")
+        ini = open(sciezka_roota_programu+"/.config_men.ini", "a")
         x = datetime.datetime.now()
         ini.write("-a "+str(id)+"$"+str(1)+"$"+str(x)+";\n")
         ini.close()
@@ -460,6 +484,7 @@ class menedzer(QWidget):
         QMessageBox.information(self, "Zainstalowano", "Wybrany dodatek został zainstalowany!", QMessageBox.Ok)
         self.pokazszczegoly(id)
     def instaluj(self, id, adres):
+        sciezka_roota = PodajSciezkeSymulatora()
         progress = QProgressBar()
         print(adres)
         adres = adres
@@ -516,6 +541,7 @@ class menedzer(QWidget):
         #self.funckjainstalacji(adres, progress)
 
     def pokazszczegoly(self, id):
+        sciezka_roota = PodajSciezkeSymulatora()
         if id == 0:
             id = int(self.sender().text().replace("&Dowiedz się więcej i instaluj! (", "").replace(")", ""))
         else:
@@ -622,7 +648,7 @@ class menedzer(QWidget):
                 przycisk_sprawdz_wiecej.clicked.connect(lambda: self.instaluj(id, pomocnicza[10]))
                 #TODO: do ogarnięcia, żeby id szło poprawne :P
                 #przycisk_sprawdz_wiecej.setFocusPolicy()
-                if SprawdzCzyZainstalowany(sciezka_roota, id):
+                if SprawdzCzyZainstalowany(sciezka_roota_programu, id):
                     przycisk_sprawdz_wiecej.setDisabled(True)
                     przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #808080; color: white")
                 layoutprzycisk.addWidget(przycisk_sprawdz_wiecej)
@@ -634,7 +660,7 @@ class menedzer(QWidget):
                 layoutenty.addWidget(QLabel("Data wydania: "+pomocnicza[12]))
                 if SprawdzCzyZainstalowany(sciezka_roota, id):
                     #string = PodajDateInstalacji(sciezka_roota, id)
-                    layoutenty.addWidget(QLabel("Data instalacji: "+str(PodajDateInstalacji(sciezka_roota, id))))
+                    layoutenty.addWidget(QLabel("Data instalacji: "+str(PodajDateInstalacji(sciezka_roota_programu, id))))
                 layoutdodatek.addLayout(layoutenty)
 
                 frame.setLayout(layoutdodatek)
