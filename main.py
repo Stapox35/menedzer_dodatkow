@@ -1,4 +1,12 @@
+#FOR LINUX
 #!/usr/bin/env python3
+import os
+#FOR WINDOWS
+'''
+import sys
+if hasattr(sys, 'frozen'):
+    os.environ['PATH'] = sys._MEIPASS + ";" + os.environ['PATH']
+'''
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar, QFileDialog
 from ksztalty import Ksztalty, Ksztalt
 # from PyQt5.QtWidgets import QHBoxLayout2
@@ -8,7 +16,6 @@ from urllib import *
 from urllib.request import urlopen
 import requests
 from funkcje import sprawdzwersje, SprawdzCzyZainstalowany,PodajDateInstalacji, PodajSciezkeSymulatora
-import os
 import array as arr
 from pyunpack import Archive
 import shutil
@@ -46,7 +53,7 @@ class menedzer(QWidget):
             if str(name) == "(PyQt5.QtCore.QUrl(''), '')":
                 self.destroy()
                 exit()
-            pathrobocza = (str(str(name).split("'")[1][7:]).split("/"))
+            pathrobocza = (str(str(name).split("'")[1][7:]).split("/")) #7 - Linux, #8 - Widnows
             sciezka_roota_robocza=""
             for i in range(len(pathrobocza)-1):
                 #print(i)
