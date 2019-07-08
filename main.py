@@ -431,12 +431,13 @@ class menedzer(QWidget):
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
     
-    def funckjainstalacji(self,adres, progress, Button,id):
+    def funckjainstalacji(self,adres, progress, Button,id,flaga, multiplier=1):
         log = open(sciezka_roota_programu+"/log_men.txt", "a", encoding="utf-8")
         sciezka_roota = PodajSciezkeSymulatora()
         response = requests.get(adres)
         data = response.text
-        progress.setValue(14.28*1) #14%
+        #progress.setValue(1)
+        progress.setValue(progress.value()+14.28*1*multiplier) #14%
         download = False
         linkacz=""
         adrestext = ""
@@ -481,7 +482,7 @@ class menedzer(QWidget):
         log.write(str(adrestext+"\r\n"))
         log.write(str(seria+"\r\n"))
         log.write(str(WspTextures+"\r\n"))
-        progress.setValue(14.28*2) #28%
+        progress.setValue(progress.value()+14.28*1*multiplier)
         
         filename = os.path.basename(linkacz)
 
@@ -489,12 +490,12 @@ class menedzer(QWidget):
         tempSciezka = sciezka_roota+"/temp/"
         if not os.path.exists(tempSciezka):
             os.makedirs(tempSciezka)
-        progress.setValue(14.28*3) #42%
+        progress.setValue(progress.value()+14.28*1*multiplier)
         if response.status_code == 200:
             with open(tempSciezka+filename, 'wb') as out:
                 out.write(response.content)
                 adresArciwum = tempSciezka+filename
-                progress.setValue(14.28*4)
+                progress.setValue(progress.value()+14.28*1*multiplier)
         else:
             print('Request failed: %d' % response.status_code)
             QMessageBox.warning(self, "Błąd", "Pobieranie dodatku nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
@@ -514,17 +515,19 @@ class menedzer(QWidget):
                 log.write("\r\n 7zip Brak")
         if sys.platform[:5]:
             Archive(adresArciwum).extractall(sciezka_roota)
-        progress.setValue(14.28*5)
+        progress.setValue(progress.value()+14.28*1*multiplier)
         textures = open(sciezka_roota+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
         textures.write("\r\n"+WpisTextures)
         textures.close()
 
-        progress.setValue(14.28*6)
+        progress.setValue(progress.value()+14.28*1*multiplier)
         shutil.rmtree(tempSciezka, ignore_errors=True)
         log.write("57\r\n")
         #os.system("del "+tempSciezka)
         log.write("usuniete\r\n")
-        progress.setValue(100)
+        
+        progress.setValue(multiplier*100)
+        print(round(progress.value()/(multiplier*100), 0))
         Button.setDisabled(True)
         ini = open(sciezka_roota_programu+"/.config_men.ini", "a")
         x = datetime.datetime.now()
@@ -533,11 +536,15 @@ class menedzer(QWidget):
         ini.close()
         response = requests.get(globalURL+"files/menedzer_dodaj.php?id="+str(id))
         data = response.text
-        QMessageBox.information(self, "Zainstalowano", "Wybrany dodatek został zainstalowany!", QMessageBox.Ok)
+
         log.write("\r\nZainstalowano\r\n")
         log.write(str(id))
         log.close()
-        self.pokazszczegoly(id)
+        if flaga:
+            QMessageBox.information(self, "Zainstalowano", "Wybrany dodatek został zainstalowany!", QMessageBox.Ok)
+            self.pokazszczegoly(id)
+        if not flaga:
+            return progress.value()
     def instaluj(self, id, adres):
         sciezka_roota = PodajSciezkeSymulatora()
         progress = QProgressBar()
@@ -572,7 +579,7 @@ class menedzer(QWidget):
         dodajBtn = QPushButton("&Instaluj!", self)
         dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
         layoutinstalacji.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(lambda: self.funckjainstalacji(adres,progress,dodajBtn,id))
+        dodajBtn.clicked.connect(lambda: self.funckjainstalacji(adres,progress,dodajBtn,id,True))
         label = QLabel("Trwa instalowanie, proszę czekać ... ")
         label.setStyleSheet("font: 40px Times New Roman; color: white")
         layoutinstalacji.addWidget(label)
@@ -688,7 +695,7 @@ class menedzer(QWidget):
                 layouttytul.addWidget(label)
 
                 layoutdodatek.addLayout(layouttytul)
-                opis = QLabel(pomocnicza[9])
+                opis = QLabel(str(pomocnicza[9]).replace("<b>", "").replace("</b>", ""))
                 opis.setStyleSheet("font: 16px")
                 opis.setWordWrap(True)
                 layoutopisy.addWidget(opis)
@@ -764,6 +771,7 @@ class menedzer(QWidget):
         layoutV.addLayout(layoutpomocniczy)
 
     def pokazwybrane(self, klucz):
+        self.clearLayout(layoutV)
         sciezka_roota = PodajSciezkeSymulatora()
         mojawersja = sprawdzwersje(sciezka_roota, globalURL)
         #print(mojawersja)
@@ -892,10 +900,17 @@ class menedzer(QWidget):
         scroll_area.setBaseSize(300,400)
         scroll_area.setLayout(layout3)
 
+        dodajBtn = QPushButton("&Instaluj wszystkie", self)
+        dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #082567; color: white")
+        layout3.addWidget(dodajBtn)
+        dodajBtn.clicked.connect(lambda: self.ScreenInstallAllAddons())
         dodajBtn = QPushButton("Pokaż &wszystkie", self)
         dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
         layout3.addWidget(dodajBtn)
         dodajBtn.clicked.connect(self.dzialanie)
+        
+        
+        
         if tablicazezwolen[0] != 0:
             dodajBtn = QPushButton("Lokomotywy &elektryczne", self)
             dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
@@ -1149,6 +1164,134 @@ class menedzer(QWidget):
         layoutpomocniczy.addWidget(version)
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
+    
+    def InstallAllAddons(self, Ids, progress,Button):
+        a=0
+        for i in Ids.split(','):
+            if i=="":
+                break
+            print(i)
+            response = requests.get(globalURL+"files/menedzer_dodatki.php")
+            data = response.text
+            many = 1/int(len(Ids.split(',')))
+            for j in data.split(';'):
+                if j=="":
+                    break
+                word = j.split('$')
+                IdAddons = int(word[0])
+               
+                if IdAddons == int(i):
+                    a=a+1
+                    Valueprogress = self.funckjainstalacji(word[10],progress,Button,IdAddons,False,many)
+
+                    
+
+        QMessageBox.information(self, "Zainstalowano", "Wszystkie dostępne dodatki zostały zainstalowane!", QMessageBox.Ok)
+        self.clearLayout(layoutV)
+        self.pokazwybrane(-1)
+               #print(IdAddons)
+
+    def ScreenInstallAllAddons(self):
+        sciezka_roota = PodajSciezkeSymulatora()
+        version = sprawdzwersje(sciezka_roota, globalURL)
+        sciezka_roota_programu = os.getcwd()
+        #print(version)
+        Ids = ""
+        response = requests.get(globalURL+"files/menedzer_dodatki.php")
+        data = response.text
+
+        for i in data.split(';'):
+            if i=="":
+                break
+            word = i.split('$')
+
+            idAddons = int(word[0])
+            addonsVer = (word[6].split(' '))[1]
+            print(addonsVer)
+            if addonsVer == version and not SprawdzCzyZainstalowany(sciezka_roota_programu, idAddons):
+                Ids = Ids+str(idAddons)+','
+        if(Ids[len(Ids)-1:]) == ',':
+            Ids = Ids[:len(Ids)-1]
+        print(Ids)
+        if Ids == "":
+            self.pokazwybrane(-1)
+            QMessageBox.information(self, "Błąd!", "Wszystkie dostępne dodatki dla Twojej wersji zostały zainstalowane!", QMessageBox.Ok)
+        else:
+            progress = QProgressBar()
+            self.clearLayout(layoutV)
+            layout = QHBoxLayout()
+            dodajBtn = QPushButton("&Wróć", self)
+            dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+            layout.addWidget(dodajBtn)
+            dodajBtn.clicked.connect(lambda: self.pokazwybrane(-1))
+            label = QLabel(self)
+            url = globalURL+"img/logo_maszyna.gif"  
+            data = urlopen(url).read()
+            pixmap = QPixmap()
+            pixmap.loadFromData(data)
+            pixmap2 = pixmap.scaled(251, 70)
+            label.setPixmap(pixmap2)
+            label.move(20,15)
+            layout.addWidget(label)
+
+            napis = QLabel(self)
+            napis.setText("Menedżer nieoficjalnych dodatków")
+            napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+            napis.move(400, 25)
+
+            layout.addWidget(napis)
+
+            layoutV.addLayout(layout)
+            layoutinstalacji = QHBoxLayout()
+            layoutinstalacji.setDirection(2)
+            dodajBtn = QPushButton("&Instaluj!", self)
+            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            layoutinstalacji.addWidget(dodajBtn)
+            dodajBtn.clicked.connect(lambda: self.InstallAllAddons(Ids, progress,dodajBtn))
+            label = QLabel("Trwa instalowanie, proszę czekać ... ")
+            label.setStyleSheet("font: 40px Times New Roman; color: white")
+            layoutinstalacji.addWidget(label)
+            
+            progress.setGeometry(10,10,500,50)
+            layoutinstalacji.addWidget(progress)
+
+            response = requests.get(globalURL+"files/menedzer_dodatki.php")
+            data = response.text
+            Titles_text = ""
+            for i in data.split(';'):
+                if i=="":
+                    break
+
+                word = i.split('$')
+                addonsVer = (word[6].split(' '))[1]
+                print(addonsVer)
+                if addonsVer == version and not SprawdzCzyZainstalowany(sciezka_roota_programu, idAddons):
+                    Titles_text = Titles_text+' '+word[1].replace("<q>", "").replace("</q>", "")+",\n"
+            if(Titles_text[len(Titles_text)-2:]) == ',\n':
+                Titles_text = Titles_text[:len(Titles_text)-2]
+            Titles = QLabel(Titles_text)
+            Titles.setStyleSheet("Font: 18px")
+            layoutinstalacji.addWidget(Titles)
+
+
+
+            layoutV.addLayout(layoutinstalacji)
+
+            #progress.setValue(50)
+            napis2 = QLabel(self)
+            napis2.setText(zmiennaCopyright)
+            napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+            layoutpomocniczy = QHBoxLayout()
+            layoutpomocniczy.addWidget(napis2)
+            version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+            version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+            layoutpomocniczy.addWidget(version)
+            #layoutpomocniczy.addSpacing(50)
+            layoutV.addLayout(layoutpomocniczy)
+
+
+        
+
 
 
 
