@@ -2,11 +2,11 @@
 #!/usr/bin/env python3
 import os
 #FOR WINDOWS
-'''
 import sys
-if hasattr(sys, 'frozen'):
-    os.environ['PATH'] = sys._MEIPASS + ";" + os.environ['PATH']
-'''
+if sys.platform[:3] == "win":
+    if hasattr(sys, 'frozen'):
+        os.environ['PATH'] = sys._MEIPASS + ";" + os.environ['PATH']
+
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar, QFileDialog
 from ksztalty import Ksztalty, Ksztalt
 # from PyQt5.QtWidgets import QHBoxLayout2
@@ -21,45 +21,51 @@ from pyunpack import Archive
 import shutil
 import codecs
 import datetime
+import os as _os
+import subprocess
 
 
 sciezka_roota = ""
 sciezka_roota_programu = os.getcwd()
 globalURL= "http://stapox.cal24.pl/"
-zmiennaCopyright = "Copyright © 2019 stapox "
+zmiennaCopyright = "Copyright © 2019 stapox"
 listazezwolen = [0,0,0,0,0,0,0,0,0,0,0]
 tablicazezwolen = arr.array('i', listazezwolen)
-versionMenedzer = "0.2"
+versionMenedzer = "0.3L"
 sciezka_roota = ""
+log = open(sciezka_roota_programu+"/log_men.txt", "w+")
+x = datetime.datetime.now()
+log.write(str(x))
+log.close()
 
-class menedzer(QWidget):
+class menedzer(QWidget): 
     def __init__(self, parent=None):
         super().__init__(parent)
-
+    
         self.interfejs()
+    
     global layoutOM1, layoutV
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
    
-    sciezka_roota_programu = os.getcwd()
-    def config(self):
-        print(sciezka_roota_programu)
+  
 
+
+
+    def config(self):
+        log = open(sciezka_roota_programu+"/log_men.txt", "a")
+        log.write(sciezka_roota_programu)
+        log.write("\r\n rozpoczynamy config\r\n")
         flagapierwszegouruchamiania = False
         if not os.path.isfile(sciezka_roota_programu+"/.config_men.ini"):
             flagapierwszegouruchamiania = True
         if flagapierwszegouruchamiania:
-            name = QFileDialog.getOpenFileUrl(self, "Podaj ścieżkę do symulatora!")
+            name = QFileDialog.getExistingDirectory(self, "Podaj ścieżkę do symulatora!")
+            print(str(name))
             if str(name) == "(PyQt5.QtCore.QUrl(''), '')":
                 self.destroy()
-                exit()
-            pathrobocza = (str(str(name).split("'")[1][7:]).split("/")) #7 - Linux, #8 - Widnows
-            sciezka_roota_robocza=""
-            for i in range(len(pathrobocza)-1):
-                #print(i)
-                sciezka_roota_robocza = sciezka_roota_robocza+pathrobocza[i]+"/"
-            print(sciezka_roota_robocza)
-            sciezka_roota = sciezka_roota_robocza
+                sys.exit(0)
+            sciezka_roota = str(name)
             ini = open(sciezka_roota_programu+"/.config_men.ini", "w+")
             x = datetime.datetime.now()
             ini.write("-p "+str(sciezka_roota)+";\n")
@@ -97,8 +103,9 @@ class menedzer(QWidget):
                 if aktualneid == 1:
                     break
             ini.close()
-        sciezka_roota = PodajSciezkeSymulatora()
+        sciezka_roota = str(PodajSciezkeSymulatora())
         flagamaszyny = True
+        print(sciezka_roota)
         if not os.path.isdir(sciezka_roota+"/dynamic"):
             flagamaszyny = False
         if not os.path.isdir(sciezka_roota+"/textures"):
@@ -118,14 +125,17 @@ class menedzer(QWidget):
             '''
         #print(sciezka_roota_programu)
         print(sciezka_roota)
-    def interfejs(self):
-        
-        layoutV.setDirection(2)
-        
-        
+        log.close()
 
+
+    def NewConfig(self):
+        os.remove(sciezka_roota_programu+"/.config_men.ini")
+        self.config()
+
+    def interfejs(self):
+        sciezka_roota_programu = os.getcwd()
+        layoutV.setDirection(2)
         layout = QHBoxLayout()
-        
         label = QLabel(self)
         url = globalURL+"img/logo_maszyna.gif"  
         data = urlopen(url).read()
@@ -167,16 +177,16 @@ class menedzer(QWidget):
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
         dodajBtn = QPushButton("&Instaluj dodatki", self)
-        dodajBtn.setStyleSheet("width: 200px; height: 75px;")
+        dodajBtn.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
         layout3.addWidget(dodajBtn)
         dodajBtn2 = QPushButton("O &projekcie", self)
-        dodajBtn2.setStyleSheet("width: 200px; height: 75px")
+        dodajBtn2.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
         layout3.addWidget(dodajBtn2)
         dodajBtn3 = QPushButton("O &zespole", self)
-        dodajBtn3.setStyleSheet("width: 200px; height: 75px")
+        dodajBtn3.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
         layout3.addWidget(dodajBtn3)
         dodajBtn4 = QPushButton("&Kontakt", self)
-        dodajBtn4.setStyleSheet("width: 200px; height: 75px")
+        dodajBtn4.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
         layout3.addWidget(dodajBtn4)
         layout3.setSpacing(32)
         layout2.addLayout(layout3)
@@ -189,10 +199,21 @@ class menedzer(QWidget):
         
         
         layoutpomocniczy = QHBoxLayout()
+
+        configBtn = QPushButton("&Konfiguruj", self)
+        configBtn.setStyleSheet("width: 50px; height: 75px; background-color: #00b15e")
+        layoutpomocniczy.addWidget(configBtn)
+        configBtn.clicked.connect(self.dzialanie)
         layoutpomocniczy.addWidget(napis2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
         layoutpomocniczy.addWidget(version)
+
+
+        
+
+
+
         #layoutpomocniczy.addSpacing(50)
         layoutV.addLayout(layoutpomocniczy)
 
@@ -227,7 +248,8 @@ class menedzer(QWidget):
        '''
         self.resize(1200, 675)
         self.setFixedSize(1200,675)
-       
+        self.setWindowIcon(QIcon(sciezka_roota_programu+'/icon.ico'))
+        print(sciezka_roota_programu+'/icon.ico')
         self.setStyleSheet("background-color: #007e43")
         self.setLayout(layoutV)
 
@@ -314,6 +336,8 @@ class menedzer(QWidget):
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
             self.pokazwybrane(-1)
+        if nadawca.text() == "&Konfiguruj":
+            self.NewConfig()
     def clearLayout(self, layout):
         if layout is not None:
             while layout.count():
@@ -327,7 +351,7 @@ class menedzer(QWidget):
     def funkcja1(self):
         layout = QHBoxLayout()
         dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
         layout.addWidget(dodajBtn)
         dodajBtn.clicked.connect(self.dzialanie)
 
@@ -412,7 +436,7 @@ class menedzer(QWidget):
         sciezka_roota = PodajSciezkeSymulatora()
         response = requests.get(adres)
         data = response.text
-        progress.setValue(14.28*1)
+        progress.setValue(14.28*1) #14%
         download = False
         linkacz=""
         adrestext = ""
@@ -453,7 +477,7 @@ class menedzer(QWidget):
         print(seria)
         print(WspTextures)
         print(WpisTextures)
-        progress.setValue(14.28*2)
+        progress.setValue(14.28*2) #28%
         
         filename = os.path.basename(linkacz)
 
@@ -461,7 +485,7 @@ class menedzer(QWidget):
         tempSciezka = sciezka_roota+"/temp/"
         if not os.path.exists(tempSciezka):
             os.makedirs(tempSciezka)
-        progress.setValue(14.28*3)
+        progress.setValue(14.28*3) #42%
         if response.status_code == 200:
             with open(tempSciezka+filename, 'wb') as out:
                 out.write(response.content)
@@ -498,7 +522,7 @@ class menedzer(QWidget):
         self.clearLayout(layoutV)
         layout = QHBoxLayout()
         dodajBtn = QPushButton("&Wróć", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
         layout.addWidget(dodajBtn)
         dodajBtn.clicked.connect(lambda: self.pokazszczegoly(id))
         label = QLabel(self)
@@ -522,7 +546,7 @@ class menedzer(QWidget):
         layoutinstalacji = QHBoxLayout()
         layoutinstalacji.setDirection(2)
         dodajBtn = QPushButton("&Instaluj!", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
         layoutinstalacji.addWidget(dodajBtn)
         dodajBtn.clicked.connect(lambda: self.funckjainstalacji(adres,progress,dodajBtn,id))
         label = QLabel("Trwa instalowanie, proszę czekać ... ")
@@ -558,7 +582,7 @@ class menedzer(QWidget):
 
         layout = QHBoxLayout()
         dodajBtn = QPushButton("&Wróć", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
         layout.addWidget(dodajBtn)
         dodajBtn.clicked.connect(self.dzialanie)
 
@@ -641,17 +665,18 @@ class menedzer(QWidget):
 
                 layoutdodatek.addLayout(layouttytul)
                 opis = QLabel(pomocnicza[9])
+                opis.setStyleSheet("font: 16px")
                 opis.setWordWrap(True)
                 layoutopisy.addWidget(opis)
                 
                 layoutdodatek.addLayout(layoutopisy)
                 wersja = pomocnicza[6]
                 wersja = wersja.split(" ")
-                layoutprzycisk.addWidget(QLabel(pomocnicza[6]))
-               
-                    
+                version = QLabel(pomocnicza[6])
+                version.setStyleSheet("font: 16px")  
+                layoutprzycisk.addWidget(version)  
                 przycisk_sprawdz_wiecej = QPushButton("&Instaluj!", self)
-                przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
+                przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #082567; color: white")
                 przycisk_sprawdz_wiecej.clicked.connect(lambda: self.instaluj(id, pomocnicza[10]))
                 #TODO: do ogarnięcia, żeby id szło poprawne :P
                 #przycisk_sprawdz_wiecej.setFocusPolicy()
@@ -663,11 +688,18 @@ class menedzer(QWidget):
 
                 layoutenty = QHBoxLayout()
                 layoutenty.setDirection(2)
-                layoutenty.addWidget(QLabel("Autorzy: "+pomocnicza[7]))
-                layoutenty.addWidget(QLabel("Data wydania: "+pomocnicza[12]))
+                authors = QLabel("Autorzy: "+pomocnicza[7])
+                authors.setStyleSheet("font: 16px; line-height: 28px")
+                layoutenty.addWidget(authors)
+                ReleaseDate = QLabel("Data wydania: "+pomocnicza[12])
+                ReleaseDate.setStyleSheet("font: 16px")
+                layoutenty.addWidget(ReleaseDate)
                 if SprawdzCzyZainstalowany(sciezka_roota, id):
                     #string = PodajDateInstalacji(sciezka_roota, id)
-                    layoutenty.addWidget(QLabel("Data instalacji: "+str(PodajDateInstalacji(sciezka_roota_programu, id))))
+                    InstallDate = QLabel("Data instalacji: "+str(PodajDateInstalacji(sciezka_roota_programu, id)))
+                    InstallDate.setStyleSheet("font: 16px;")
+                    layoutenty.addWidget(InstallDate)
+
                 layoutdodatek.addLayout(layoutenty)
 
                 frame.setLayout(layoutdodatek)
@@ -715,7 +747,7 @@ class menedzer(QWidget):
 
         layout = QHBoxLayout()
         dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
         layout.addWidget(dodajBtn)
         dodajBtn.clicked.connect(self.dzialanie)
 
@@ -837,62 +869,62 @@ class menedzer(QWidget):
         scroll_area.setLayout(layout3)
 
         dodajBtn = QPushButton("Pokaż &wszystkie", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
         layout3.addWidget(dodajBtn)
         dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[0] != 0:
             dodajBtn = QPushButton("Lokomotywy &elektryczne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[1] != 0:
             dodajBtn = QPushButton("Lokomotywy &spalinowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[2] !=0:
             dodajBtn = QPushButton("Lokomotywy &parowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[3] !=0:
             dodajBtn = QPushButton("Wagony &osobowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[4] !=0:
             dodajBtn = QPushButton("Wagony &towarowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[5] !=0:
             dodajBtn = QPushButton("P&ojazdy specjalne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[7] !=0:
             dodajBtn = QPushButton("Elektryczne &zespoły trakcyjne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[8] !=0:
             dodajBtn = QPushButton("Spalino&we zespoły trakcyjne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[9] !=0:
             dodajBtn = QPushButton("Wagony &akumulatorowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[10] !=0:
             dodajBtn = QPushButton("Wagony &motorowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
         if tablicazezwolen[6] !=0:
             dodajBtn = QPushButton("S&cenerie", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;")
+            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
             layout3.addWidget(dodajBtn)
             dodajBtn.clicked.connect(self.dzialanie)
 
@@ -919,7 +951,7 @@ class menedzer(QWidget):
     def funkcja2(self):
         layout = QHBoxLayout()
         dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
         layout.addWidget(dodajBtn)
         dodajBtn.clicked.connect(self.dzialanie)
 
@@ -1004,7 +1036,7 @@ class menedzer(QWidget):
     def funkcja3(self):
         layout = QHBoxLayout()
         dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;")
+        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
         layout.addWidget(dodajBtn)
         dodajBtn.clicked.connect(self.dzialanie)
 
