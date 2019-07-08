@@ -47,10 +47,6 @@ class menedzer(QWidget):
     global layoutOM1, layoutV
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
-   
-  
-
-
 
     def config(self):
         log = open(sciezka_roota_programu+"/log_men.txt", "a")
@@ -62,9 +58,12 @@ class menedzer(QWidget):
         if flagapierwszegouruchamiania:
             name = QFileDialog.getExistingDirectory(self, "Podaj ścieżkę do symulatora!")
             print(str(name))
-            if str(name) == "(PyQt5.QtCore.QUrl(''), '')":
+            if str(name) == "":
                 self.destroy()
-                sys.exit(0)
+                if sys.platform[:3] == "win":
+                    sys.exit(0)
+                if sys.platform[:5] == "linux":
+                    exit()
             sciezka_roota = str(name)
             ini = open(sciezka_roota_programu+"/.config_men.ini", "w+")
             x = datetime.datetime.now()
@@ -433,6 +432,7 @@ class menedzer(QWidget):
         layoutV.addLayout(layoutpomocniczy)
     
     def funckjainstalacji(self,adres, progress, Button,id):
+        log = open(sciezka_roota_programu+"/log_men.txt", "a", encoding="utf-8")
         sciezka_roota = PodajSciezkeSymulatora()
         response = requests.get(adres)
         data = response.text
@@ -477,6 +477,10 @@ class menedzer(QWidget):
         print(seria)
         print(WspTextures)
         print(WpisTextures)
+        log.write(str(linkacz+"\r\n"))
+        log.write(str(adrestext+"\r\n"))
+        log.write(str(seria+"\r\n"))
+        log.write(str(WspTextures+"\r\n"))
         progress.setValue(14.28*2) #28%
         
         filename = os.path.basename(linkacz)
@@ -495,24 +499,44 @@ class menedzer(QWidget):
             print('Request failed: %d' % response.status_code)
             QMessageBox.warning(self, "Błąd", "Pobieranie dodatku nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
             self.pokazszczegoly(id)
-        Archive(adresArciwum).extractall(sciezka_roota)
+        if sys.platform[:3] == "win":
+            if os.path.isfile("C:/Program Files (x86)/7-Zip/7z.exe"):
+                log.write("\r\n 7zip x86 ")
+                file7z = '"C:/Program Files (x86)/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+sciezka_roota+'" -y'
+                subprocess.call(file7z)
+            elif os.path.isfile("C:/Program Files/7-Zip/7z.exe"):
+                log.write("\r\n 7zip Programfiles ")
+                file7z='"C:/Program Files/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+sciezka_roota+'"  -y'
+                subprocess.call(file7z)
+            else:
+                QMessageBox.warning(self, "Błąd", "Nie znaleziono 7-zip! Proszę zainstalować!!!", QMessageBox.Ok)
+                self.pokazszczegoly(id)
+                log.write("\r\n 7zip Brak")
+        if sys.platform[:5]:
+            Archive(adresArciwum).extractall(sciezka_roota)
         progress.setValue(14.28*5)
-        
-        textures = open(sciezka_roota+"/"+adrestext+"/textures.txt", "a")
+        textures = open(sciezka_roota+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
         textures.write("\r\n"+WpisTextures)
         textures.close()
 
         progress.setValue(14.28*6)
         shutil.rmtree(tempSciezka, ignore_errors=True)
+        log.write("57\r\n")
+        #os.system("del "+tempSciezka)
+        log.write("usuniete\r\n")
         progress.setValue(100)
         Button.setDisabled(True)
         ini = open(sciezka_roota_programu+"/.config_men.ini", "a")
         x = datetime.datetime.now()
         ini.write("-a "+str(id)+"$"+str(1)+"$"+str(x)+";\n")
+        log.write("-a "+str(id)+"$"+str(1)+"$"+str(x)+";\n")
         ini.close()
         response = requests.get(globalURL+"files/menedzer_dodaj.php?id="+str(id))
         data = response.text
         QMessageBox.information(self, "Zainstalowano", "Wybrany dodatek został zainstalowany!", QMessageBox.Ok)
+        log.write("\r\nZainstalowano\r\n")
+        log.write(str(id))
+        log.close()
         self.pokazszczegoly(id)
     def instaluj(self, id, adres):
         sciezka_roota = PodajSciezkeSymulatora()
