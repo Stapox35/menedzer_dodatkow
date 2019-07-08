@@ -8,14 +8,14 @@ if sys.platform[:3] == "win":
         os.environ['PATH'] = sys._MEIPASS + ";" + os.environ['PATH']
 
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar, QFileDialog
-from ksztalty import Ksztalty, Ksztalt
+from shapes import Ksztalty, Ksztalt
 # from PyQt5.QtWidgets import QHBoxLayout2
 from PyQt5.QtGui import QPainter, QColor, QPolygon, QPixmap, QIcon, QImage
 from PyQt5.QtCore import QPoint, QRect, QSize
 from urllib import *
 from urllib.request import urlopen
 import requests
-from funkcje import sprawdzwersje, SprawdzCzyZainstalowany,PodajDateInstalacji, PodajSciezkeSymulatora
+from function import TakeMyVersion, IsInstall,TakeInstallDate, TakePathSimulator
 import array as arr
 from pyunpack import Archive
 import shutil
@@ -25,15 +25,15 @@ import os as _os
 import subprocess
 
 
-sciezka_roota = ""
-sciezka_roota_programu = os.getcwd()
+path_simulator_root = ""
+path_program_root = os.getcwd()
 globalURL= "http://stapox.cal24.pl/"
-zmiennaCopyright = "Copyright © 2019 stapox"
-listazezwolen = [0,0,0,0,0,0,0,0,0,0,0]
-tablicazezwolen = arr.array('i', listazezwolen)
+CopyrightText = "Copyright © 2019 stapox"
+PermissionList = [0,0,0,0,0,0,0,0,0,0,0]
+PermissionArray = arr.array('i', PermissionList)
 versionMenedzer = "0.3L"
-sciezka_roota = ""
-log = open(sciezka_roota_programu+"/log_men.txt", "w+")
+path_simulator_root = ""
+log = open(path_program_root+"/log_men.txt", "w+")
 x = datetime.datetime.now()
 log.write(str(x))
 log.close()
@@ -49,13 +49,13 @@ class menedzer(QWidget):
     layoutV = QVBoxLayout()
 
     def config(self):
-        log = open(sciezka_roota_programu+"/log_men.txt", "a")
-        log.write(sciezka_roota_programu)
+        log = open(path_program_root+"/log_men.txt", "a")
+        log.write(path_program_root)
         log.write("\r\n rozpoczynamy config\r\n")
-        flagapierwszegouruchamiania = False
-        if not os.path.isfile(sciezka_roota_programu+"/.config_men.ini"):
-            flagapierwszegouruchamiania = True
-        if flagapierwszegouruchamiania:
+        firstrunbool = False
+        if not os.path.isfile(path_program_root+"/.config_men.ini"):
+            firstrunbool = True
+        if firstrunbool:
             name = QFileDialog.getExistingDirectory(self, "Podaj ścieżkę do symulatora!")
             print(str(name))
             if str(name) == "":
@@ -64,10 +64,10 @@ class menedzer(QWidget):
                     sys.exit(0)
                 if sys.platform[:5] == "linux":
                     exit()
-            sciezka_roota = str(name)
-            ini = open(sciezka_roota_programu+"/.config_men.ini", "w+")
+            path_simulator_root = str(name)
+            ini = open(path_program_root+"/.config_men.ini", "w+")
             x = datetime.datetime.now()
-            ini.write("-p "+str(sciezka_roota)+";\n")
+            ini.write("-p "+str(path_simulator_root)+";\n")
             ini.write("-v "+str(versionMenedzer)+"$"+str(x)+";\n")
             ini.write("[ADDONS]\n")
             response = requests.get(globalURL+"files/menedzer_dodatki.php")
@@ -77,44 +77,44 @@ class menedzer(QWidget):
             data = data.replace("<br />", "")
             data = data.split(';')
             for i in data:
-                pomocnicza = i.split("$")
-                aktualneid = int(pomocnicza[0])
-                adresRI = pomocnicza[10]
-                flagaweryfikacji = False
+                auxiliaryVariable = i.split("$")
+                CurrentId = int(auxiliaryVariable[0])
+                adresRI = auxiliaryVariable[10]
+                VerifyBool = False
                 response = requests.get(adresRI)
                 dataRI = response.text
-                flagategoid=True
+                ThisIdBool=True
                 for o in dataRI.split('\n'):
                     o=o.replace("\r", "").replace(" ", "").replace("\t", "")
-                    if flagaweryfikacji:
+                    if VerifyBool:
                         if o =="":
-                            flagaweryfikacji = False
+                            VerifyBool = False
                         path = o.split("=")[0]
                         if path != "":
                             path = path.replace('\\', "/")
-                            #print(sciezka_roota+"/"+path)
-                            if not os.path.isfile(sciezka_roota+"/"+path):
-                                flagategoid = False  
+                            #print(path_simulator_root+"/"+path)
+                            if not os.path.isfile(path_simulator_root+"/"+path):
+                                ThisIdBool = False  
                     if o[:8] == "[VERIFY]":
-                        flagaweryfikacji = True
-                if flagategoid == True:
-                    ini.write("-a "+str(aktualneid)+"$"+str(1)+"$"+str(x)+";\n")
-                if aktualneid == 1:
+                        VerifyBool = True
+                if ThisIdBool == True:
+                    ini.write("-a "+str(CurrentId)+"$"+str(1)+"$"+str(x)+";\n")
+                if CurrentId == 1:
                     break
             ini.close()
-        sciezka_roota = str(PodajSciezkeSymulatora())
-        flagamaszyny = True
-        print(sciezka_roota)
-        if not os.path.isdir(sciezka_roota+"/dynamic"):
-            flagamaszyny = False
-        if not os.path.isdir(sciezka_roota+"/textures"):
-            flagamaszyny = False
-        if not os.path.isdir(sciezka_roota+"/scenery"):
-            flagamaszyny = False
+        path_simulator_root = str(TakePathSimulator())
+        MaszynaBool = True
+        print(path_simulator_root)
+        if not os.path.isdir(path_simulator_root+"/dynamic"):
+            MaszynaBool = False
+        if not os.path.isdir(path_simulator_root+"/textures"):
+            MaszynaBool = False
+        if not os.path.isdir(path_simulator_root+"/scenery"):
+            MaszynaBool = False
         
-        if flagamaszyny == False:
+        if MaszynaBool == False:
             QMessageBox.warning(self, "Błąd", "Skonfiguruj jeszcze raz program!", QMessageBox.Ok)
-            os.remove(sciezka_roota_programu+"/.config_men.ini")
+            os.remove(path_program_root+"/.config_men.ini")
             #print(name)
            
             self.config()
@@ -122,17 +122,17 @@ class menedzer(QWidget):
             self.destroy()
             exit()
             '''
-        #print(sciezka_roota_programu)
-        print(sciezka_roota)
+        #print(path_program_root)
+        print(path_simulator_root)
         log.close()
 
 
     def NewConfig(self):
-        os.remove(sciezka_roota_programu+"/.config_men.ini")
+        os.remove(path_program_root+"/.config_men.ini")
         self.config()
 
     def interfejs(self):
-        sciezka_roota_programu = os.getcwd()
+        path_program_root = os.getcwd()
         layoutV.setDirection(2)
         layout = QHBoxLayout()
         label = QLabel(self)
@@ -146,10 +146,10 @@ class menedzer(QWidget):
         layout.addWidget(label)
 
         
-        napis = QLabel(self)
-        napis.setText("Menedżer nieoficjalnych dodatków")
-        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-        napis.move(400, 25)
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.move(400, 25)
 
             
                 
@@ -157,79 +157,79 @@ class menedzer(QWidget):
 
 
 
-        layout.addWidget(napis)
+        layout.addWidget(inscription)
         layoutV.addLayout(layout)
 
         layout2 = QHBoxLayout()
 
-        zdjecie = QLabel(self)
+        Image = QLabel(self)
         url2 = globalURL+"img/img_tytulowa.jpg"
         data =  urlopen(url2).read()
         pixmap3 = QPixmap()
         pixmap3.loadFromData(data)
         #  pixmap4 = pixmap3.scaled(755, 425)
-        zdjecie.setPixmap(pixmap3)
-        zdjecie.move(0,125)
+        Image.setPixmap(pixmap3)
+        Image.move(0,125)
         
 
-        layout2.addWidget(zdjecie)
+        layout2.addWidget(Image)
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
-        dodajBtn = QPushButton("&Instaluj dodatki", self)
-        dodajBtn.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
-        layout3.addWidget(dodajBtn)
-        dodajBtn2 = QPushButton("O &projekcie", self)
-        dodajBtn2.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
-        layout3.addWidget(dodajBtn2)
-        dodajBtn3 = QPushButton("O &zespole", self)
-        dodajBtn3.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
-        layout3.addWidget(dodajBtn3)
-        dodajBtn4 = QPushButton("&Kontakt", self)
-        dodajBtn4.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
-        layout3.addWidget(dodajBtn4)
+        addPushButton = QPushButton("&Instaluj dodatki", self)
+        addPushButton.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        layout3.addWidget(addPushButton)
+        addPushButton2 = QPushButton("O &projekcie", self)
+        addPushButton2.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        layout3.addWidget(addPushButton2)
+        addPushButton3 = QPushButton("O &zespole", self)
+        addPushButton3.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        layout3.addWidget(addPushButton3)
+        addPushButton4 = QPushButton("&Kontakt", self)
+        addPushButton4.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        layout3.addWidget(addPushButton4)
         layout3.setSpacing(32)
         layout2.addLayout(layout3)
         
         layoutV.addLayout(layout2)
-        napis2 = QLabel(self)
-        napis2.setText(zmiennaCopyright)
-        napis2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
 
         
         
-        layoutpomocniczy = QHBoxLayout()
+        HelpingLayout = QHBoxLayout()
 
         configBtn = QPushButton("&Konfiguruj", self)
         configBtn.setStyleSheet("width: 50px; height: 75px; background-color: #00b15e")
-        layoutpomocniczy.addWidget(configBtn)
-        configBtn.clicked.connect(self.dzialanie)
-        layoutpomocniczy.addWidget(napis2)
+        HelpingLayout.addWidget(configBtn)
+        configBtn.clicked.connect(self.ActionFunction)
+        HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-        layoutpomocniczy.addWidget(version)
+        HelpingLayout.addWidget(version)
 
 
         
 
 
 
-        #layoutpomocniczy.addSpacing(50)
-        layoutV.addLayout(layoutpomocniczy)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
 
        
-        napis3 = QLabel()
-        napis3.setText("O Projekcie")
-        napis2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
-        layoutOM1.addWidget(napis3)
+        inscription3 = QLabel()
+        inscription3.setText("O Projekcie")
+        inscription2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
+        layoutOM1.addWidget(inscription3)
 
        
             
 
         
-        dodajBtn.clicked.connect(self.dzialanie)
-        dodajBtn2.clicked.connect(self.dzialanie)
-        dodajBtn3.clicked.connect(self.dzialanie)
-        dodajBtn4.clicked.connect(self.dzialanie)
+        addPushButton.clicked.connect(self.ActionFunction)
+        addPushButton2.clicked.connect(self.ActionFunction)
+        addPushButton3.clicked.connect(self.ActionFunction)
+        addPushButton4.clicked.connect(self.ActionFunction)
 
         layoutX = QVBoxLayout()
         layoutX.setDirection(2)
@@ -237,18 +237,18 @@ class menedzer(QWidget):
         self.setWindowTitle("Menedżer nieoficjalnych dodatków")
         '''
         url2 = globalURL+"img/tlo.jpg"
-        zdjecie = QLabel(self)
+        Image = QLabel(self)
         data =  urlopen(url2).read()
         pixmap3 = QPixmap()
         pixmap3.loadFromData(data)
-        zdjecie.setPixmap(pixmap3)
-       # layoutX.addWidget(zdjecie)
+        Image.setPixmap(pixmap3)
+       # layoutX.addWidget(Image)
        #layoutV.addChildLayout(layoutX)
        '''
         self.resize(1200, 675)
         self.setFixedSize(1200,675)
-        self.setWindowIcon(QIcon(sciezka_roota_programu+'/icon.ico'))
-        print(sciezka_roota_programu+'/icon.ico')
+        self.setWindowIcon(QIcon(path_program_root+'/icon.ico'))
+        print(path_program_root+'/icon.ico')
         self.setStyleSheet("background-color: #007e43")
         self.setLayout(layoutV)
 
@@ -256,87 +256,85 @@ class menedzer(QWidget):
         self.show()
         self.config()
     
-   
+    def ActionFunction(self):
 
-
-    def dzialanie(self):
-
-        nadawca = self.sender()   
+        senderVariable = self.sender()   
        
-        if nadawca.text() == "O &projekcie":
+        if senderVariable.text() == "O &projekcie":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.funkcja1()
-        if nadawca.text() == "O &zespole":
+            self.function1()
+        if senderVariable.text() == "O &zespole":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.funkcja2()
-        if nadawca.text() == "&Home":
+            self.Function2()
+        if senderVariable.text() == "&Home":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
             self.interfejs()
-        if nadawca.text() == "&Kontakt":
+        if senderVariable.text() == "&Kontakt":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.funkcja3()
-        if nadawca.text() == "&Instaluj dodatki":
+            self.Function3()
+        if senderVariable.text() == "&Instaluj dodatki":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(-1)
-        if nadawca.text() == "Lokomotywy &elektryczne":
+            self.ViewChoose(-1)
+        if senderVariable.text() == "Lokomotywy &elektryczne":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(1)
-        if nadawca.text() == "Lokomotywy &spalinowe":
+            self.ViewChoose(1)
+        if senderVariable.text() == "Lokomotywy &spalinowe":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(2)
-        if nadawca.text() == "Lokomotywy &parowe":
+            self.ViewChoose(2)
+        if senderVariable.text() == "Lokomotywy &parowe":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(3)
-        if nadawca.text() == "Wagony &osobowe":
+            self.ViewChoose(3)
+        if senderVariable.text() == "Wagony &osobowe":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(4)
-        if nadawca.text() == "Wagony &towarowe":
+            self.ViewChoose(4)
+        if senderVariable.text() == "Wagony &towarowe":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(5)
-        if nadawca.text() == "P&ojazdy specjalne":
+            self.ViewChoose(5)
+        if senderVariable.text() == "P&ojazdy specjalne":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(6)
-        if nadawca.text() == "S&cenerie":
+            self.ViewChoose(6)
+        if senderVariable.text() == "S&cenerie":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(7)
-        if nadawca.text() == "Elektryczne &zespoły trakcyjne":
+            self.ViewChoose(7)
+        if senderVariable.text() == "Elektryczne &zespoły trakcyjne":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(8)
-        if nadawca.text() == "Spalino&we zespoły trakcyjne":
+            self.ViewChoose(8)
+        if senderVariable.text() == "Spalino&we zespoły trakcyjne":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(9)
-        if nadawca.text() == "Wagony &akumulatorowe":
+            self.ViewChoose(9)
+        if senderVariable.text() == "Wagony &akumulatorowe":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(10)
-        if nadawca.text() == "Wagony &motorowe":
+            self.ViewChoose(10)
+        if senderVariable.text() == "Wagony &motorowe":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(11)
-        if nadawca.text() == "Pokaż &wszystkie":
+            self.ViewChoose(11)
+        if senderVariable.text() == "Pokaż &wszystkie":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(-1)
-        if nadawca.text() == "&Wróć":
+            self.ViewChoose(-1)
+        if senderVariable.text() == "&Wróć":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
-            self.pokazwybrane(-1)
-        if nadawca.text() == "&Konfiguruj":
+            self.ViewChoose(-1)
+        if senderVariable.text() == "&Konfiguruj":
             self.NewConfig()
+    
     def clearLayout(self, layout):
         if layout is not None:
             while layout.count():
@@ -347,12 +345,12 @@ class menedzer(QWidget):
                 else:
                     self.clearLayout(item.layout())
 
-    def funkcja1(self):
+    def function1(self):
         layout = QHBoxLayout()
-        dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
-        layout.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(self.dzialanie)
+        addPushButton = QPushButton("&Home", self)
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        layout.addWidget(addPushButton)
+        addPushButton.clicked.connect(self.ActionFunction)
 
         label = QLabel(self)
         url = globalURL+"img/logo_maszyna.gif"  
@@ -364,172 +362,172 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-        napis = QLabel(self)
-        napis.setText("Menedżer nieoficjalnych dodatków")
-        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-        napis.move(400, 25)
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.move(400, 25)
 
-        layout.addWidget(napis)
+        layout.addWidget(inscription)
 
         layoutV.addLayout(layout)
 
         layout2 = QHBoxLayout()
 
-        zdjecie = QLabel(self)
+        Image = QLabel(self)
         url2 = globalURL+"img/skrin-o-projekcie.jpg"
         data =  urlopen(url2).read()
         pixmap3 = QPixmap()
         pixmap3.loadFromData(data)
         #  pixmap4 = pixmap3.scaled(755, 425)
-        zdjecie.setPixmap(pixmap3)
-        zdjecie.move(0,125)
+        Image.setPixmap(pixmap3)
+        Image.move(0,125)
         
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
 
-        napis5 = QLabel(self)
-        napis5.setText("O Projekcie")
-        napis5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
-        layout3.addWidget(napis5)
+        inscription5 = QLabel(self)
+        inscription5.setText("O Projekcie")
+        inscription5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
+        layout3.addWidget(inscription5)
 
         response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
         data = response.text
         data = data.replace('\n', ' ')
         #i = 0
-        flagaoprojekcie = False
+        ProjectBool = False
         text = data.split(' ')
         textpl = ""
         for s in text:
-            if flagaoprojekcie:
+            if ProjectBool:
                 if s == "[OZ]":
-                    flagaoprojekcie = False
+                    ProjectBool = False
                     break
                 textpl = textpl+' '+s
             if s == "[OP]":
-                flagaoprojekcie = True
+                ProjectBool = True
                 #print("rozpoczalem_wydzielac")
         
        #print(textpl[5:len(textpl)-2])
 
-        napisPL = QLabel(self)
-        napisPL.setText(textpl[5:len(textpl)-1])
-        napisPL.setStyleSheet("font: 16pt Times New Roman; color: white")
-        napisPL.setWordWrap(True)
-        layout3.addWidget(napisPL)
-        layout2.addWidget(zdjecie)
+        inscriptionPL = QLabel(self)
+        inscriptionPL.setText(textpl[5:len(textpl)-1])
+        inscriptionPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL.setWordWrap(True)
+        layout3.addWidget(inscriptionPL)
+        layout2.addWidget(Image)
         layout2.addLayout(layout3)
         layoutV.addLayout(layout2)
 
-        napis2 = QLabel(self)
-        napis2.setText(zmiennaCopyright)
-        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
-        layoutpomocniczy = QHBoxLayout()
-        layoutpomocniczy.addWidget(napis2)
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        HelpingLayout = QHBoxLayout()
+        HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-        layoutpomocniczy.addWidget(version)
-        #layoutpomocniczy.addSpacing(50)
-        layoutV.addLayout(layoutpomocniczy)
+        HelpingLayout.addWidget(version)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
     
-    def funckjainstalacji(self,adres, progress, Button,id,flaga, multiplier=1):
-        log = open(sciezka_roota_programu+"/log_men.txt", "a", encoding="utf-8")
-        sciezka_roota = PodajSciezkeSymulatora()
+    def InstallFunction(self,adres, progress, Button,id,flaga, multiplier=1):
+        log = open(path_program_root+"/log_men.txt", "a", encoding="utf-8")
+        path_simulator_root = TakePathSimulator()
         response = requests.get(adres)
         data = response.text
         #progress.setValue(1)
         progress.setValue(progress.value()+14.28*1*multiplier) #14%
         download = False
-        linkacz=""
+        LinkVariable=""
         adrestext = ""
-        seria="x"
-        seriaflaga = False
+        series="x"
+        seriesflaga = False
         textures = False
-        WpisTextures=""
-        WspTextures="\n"
+        RegTextures=""
+        CoorTextures="\n"
         for i in data.split("\n"):
             i = i.replace("\t", "")
             i = i.replace("\r", "")
             i = i.replace(" ", "")
             if download:
                 i = i.split("=")
-                linkacz = i[0]
+                LinkVariable = i[0]
                 download = False
             if textures:
                 i = i.split("=")
                 adrestext = i[0]
-                seria = i[1]
+                series = i[1]
                 textures = False
-            if seriaflaga:
+            if seriesflaga:
                 if i =="":
-                    seriaflaga = False
+                    seriesflaga = False
                 if i[:1] == "!":
-                    WspTextures = i
+                    CoorTextures = i
                 else:
                     i = str(i).replace("\n", "").replace(" ","").replace("\r\n", "").replace("\t", "").replace("\r", "")
-                    WpisTextures = WpisTextures+str(i)+"\r\n"
+                    RegTextures = RegTextures+str(i)+"\r\n"
             if i[:10] == "[DOWNLOAD]":
                 download = True
             if i[:14] == "[TEXTURES.TXT]":
                 textures = True
-            if i[:len(seria)+2] == "["+seria+"]":
-                seriaflaga = True
-        print(linkacz)
+            if i[:len(series)+2] == "["+series+"]":
+                seriesflaga = True
+        print(LinkVariable)
         print(adrestext)
-        print(seria)
-        print(WspTextures)
-        print(WpisTextures)
-        log.write(str(linkacz+"\r\n"))
+        print(series)
+        print(CoorTextures)
+        print(RegTextures)
+        log.write(str(LinkVariable+"\r\n"))
         log.write(str(adrestext+"\r\n"))
-        log.write(str(seria+"\r\n"))
-        log.write(str(WspTextures+"\r\n"))
+        log.write(str(series+"\r\n"))
+        log.write(str(CoorTextures+"\r\n"))
         progress.setValue(progress.value()+14.28*1*multiplier)
         
-        filename = os.path.basename(linkacz)
+        filename = os.path.basename(LinkVariable)
 
-        response = requests.get(linkacz, stream=True)
-        tempSciezka = sciezka_roota+"/temp/"
-        if not os.path.exists(tempSciezka):
-            os.makedirs(tempSciezka)
+        response = requests.get(LinkVariable, stream=True)
+        TempPath = path_simulator_root+"/temp/"
+        if not os.path.exists(TempPath):
+            os.makedirs(TempPath)
         progress.setValue(progress.value()+14.28*1*multiplier)
         if response.status_code == 200:
-            with open(tempSciezka+filename, 'wb') as out:
+            with open(TempPath+filename, 'wb') as out:
                 out.write(response.content)
-                adresArciwum = tempSciezka+filename
+                adresArciwum = TempPath+filename
                 progress.setValue(progress.value()+14.28*1*multiplier)
         else:
             print('Request failed: %d' % response.status_code)
             QMessageBox.warning(self, "Błąd", "Pobieranie dodatku nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
-            self.pokazszczegoly(id)
+            self.ViewDetails(id)
         if sys.platform[:3] == "win":
             if os.path.isfile("C:/Program Files (x86)/7-Zip/7z.exe"):
                 log.write("\r\n 7zip x86 ")
-                file7z = '"C:/Program Files (x86)/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+sciezka_roota+'" -y'
+                file7z = '"C:/Program Files (x86)/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+path_simulator_root+'" -y'
                 subprocess.call(file7z)
             elif os.path.isfile("C:/Program Files/7-Zip/7z.exe"):
                 log.write("\r\n 7zip Programfiles ")
-                file7z='"C:/Program Files/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+sciezka_roota+'"  -y'
+                file7z='"C:/Program Files/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+path_simulator_root+'"  -y'
                 subprocess.call(file7z)
             else:
                 QMessageBox.warning(self, "Błąd", "Nie znaleziono 7-zip! Proszę zainstalować!!!", QMessageBox.Ok)
-                self.pokazszczegoly(id)
+                self.ViewDetails(id)
                 log.write("\r\n 7zip Brak")
         if sys.platform[:5]:
-            Archive(adresArciwum).extractall(sciezka_roota)
+            Archive(adresArciwum).extractall(path_simulator_root)
         progress.setValue(progress.value()+14.28*1*multiplier)
-        textures = open(sciezka_roota+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
-        textures.write("\r\n"+WpisTextures)
+        textures = open(path_simulator_root+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
+        textures.write("\r\n"+RegTextures)
         textures.close()
 
         progress.setValue(progress.value()+14.28*1*multiplier)
-        shutil.rmtree(tempSciezka, ignore_errors=True)
+        shutil.rmtree(TempPath, ignore_errors=True)
         log.write("57\r\n")
-        #os.system("del "+tempSciezka)
+        #os.system("del "+TempPath)
         log.write("usuniete\r\n")
         
         progress.setValue(multiplier*100)
         print(round(progress.value()/(multiplier*100), 0))
         Button.setDisabled(True)
-        ini = open(sciezka_roota_programu+"/.config_men.ini", "a")
+        ini = open(path_program_root+"/.config_men.ini", "a")
         x = datetime.datetime.now()
         ini.write("-a "+str(id)+"$"+str(1)+"$"+str(x)+";\n")
         log.write("-a "+str(id)+"$"+str(1)+"$"+str(x)+";\n")
@@ -542,20 +540,20 @@ class menedzer(QWidget):
         log.close()
         if flaga:
             QMessageBox.information(self, "Zainstalowano", "Wybrany dodatek został zainstalowany!", QMessageBox.Ok)
-            self.pokazszczegoly(id)
+            self.ViewDetails(id)
         if not flaga:
             return progress.value()
-    def instaluj(self, id, adres):
-        sciezka_roota = PodajSciezkeSymulatora()
+    def Install(self, id, adres):
+        path_simulator_root = TakePathSimulator()
         progress = QProgressBar()
         print(adres)
         adres = adres
         self.clearLayout(layoutV)
         layout = QHBoxLayout()
-        dodajBtn = QPushButton("&Wróć", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
-        layout.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(lambda: self.pokazszczegoly(id))
+        addPushButton = QPushButton("&Wróć", self)
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        layout.addWidget(addPushButton)
+        addPushButton.clicked.connect(lambda: self.ViewDetails(id))
         label = QLabel(self)
         url = globalURL+"img/logo_maszyna.gif"  
         data = urlopen(url).read()
@@ -566,20 +564,20 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-        napis = QLabel(self)
-        napis.setText("Menedżer nieoficjalnych dodatków")
-        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-        napis.move(400, 25)
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.move(400, 25)
 
-        layout.addWidget(napis)
+        layout.addWidget(inscription)
 
         layoutV.addLayout(layout)
         layoutinstalacji = QHBoxLayout()
         layoutinstalacji.setDirection(2)
-        dodajBtn = QPushButton("&Instaluj!", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
-        layoutinstalacji.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(lambda: self.funckjainstalacji(adres,progress,dodajBtn,id,True))
+        addPushButton = QPushButton("&Instaluj!", self)
+        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+        layoutinstalacji.addWidget(addPushButton)
+        addPushButton.clicked.connect(lambda: self.InstallFunction(adres,progress,addPushButton,id,True))
         label = QLabel("Trwa instalowanie, proszę czekać ... ")
         label.setStyleSheet("font: 40px Times New Roman; color: white")
         layoutinstalacji.addWidget(label)
@@ -589,21 +587,21 @@ class menedzer(QWidget):
         layoutV.addLayout(layoutinstalacji)
 
         #progress.setValue(50)
-        napis2 = QLabel(self)
-        napis2.setText(zmiennaCopyright)
-        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
-        layoutpomocniczy = QHBoxLayout()
-        layoutpomocniczy.addWidget(napis2)
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        HelpingLayout = QHBoxLayout()
+        HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-        layoutpomocniczy.addWidget(version)
-        #layoutpomocniczy.addSpacing(50)
-        layoutV.addLayout(layoutpomocniczy)
+        HelpingLayout.addWidget(version)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
 
-        #self.funckjainstalacji(adres, progress)
+        #self.InstallFunction(adres, progress)
 
-    def pokazszczegoly(self, id):
-        sciezka_roota = PodajSciezkeSymulatora()
+    def ViewDetails(self, id):
+        path_simulator_root = TakePathSimulator()
         if id == 0:
             id = int(self.sender().text().replace("&Dowiedz się więcej i instaluj! (", "").replace(")", ""))
         else:
@@ -612,10 +610,10 @@ class menedzer(QWidget):
         self.clearLayout(layoutV)
 
         layout = QHBoxLayout()
-        dodajBtn = QPushButton("&Wróć", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
-        layout.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(self.dzialanie)
+        addPushButton = QPushButton("&Wróć", self)
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        layout.addWidget(addPushButton)
+        addPushButton.clicked.connect(self.ActionFunction)
 
         label = QLabel(self)
         url = globalURL+"img/logo_maszyna.gif"  
@@ -627,17 +625,17 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-        napis = QLabel(self)
-        napis.setText("Menedżer nieoficjalnych dodatków")
-        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-        napis.move(400, 25)
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.move(400, 25)
 
-        layout.addWidget(napis)
+        layout.addWidget(inscription)
 
         layoutV.addLayout(layout)
 
         
-        layoutkolejny = QHBoxLayout()
+        NextLayout = QHBoxLayout()
         
         response = requests.get(globalURL+"files/menedzer_dodatki.php")
         data = response.text
@@ -657,87 +655,87 @@ class menedzer(QWidget):
                 break
 
             frame = QFrame()
-            pomocnicza = str(i).split('$')
+            auxiliaryVariable = str(i).split('$')
 
-            aktualneid = pomocnicza[0].replace(" ", "")
-            if int(aktualneid) == id:
+            CurrentId = auxiliaryVariable[0].replace(" ", "")
+            if int(CurrentId) == id:
 
-                layoutdodatek = QHBoxLayout()
-                layoutprzycisk = QHBoxLayout()
-                layoutopisy = QHBoxLayout()
-                layouttytul = QHBoxLayout()
+                AddonsLayout = QHBoxLayout()
+                ButtonLayout = QHBoxLayout()
+                DescLayout = QHBoxLayout()
+                TitleLayout = QHBoxLayout()
 
-                layoutdodatek.setDirection(2)
+                AddonsLayout.setDirection(2)
                 
             
                 
                 #QLabel().setPixmap(QPixmap().loadFromData(urlopen(adres).read()))
                 label = QLabel()
                 pixmap = QPixmap()
-                adres = str(globalURL+pomocnicza[4])
+                adres = str(globalURL+auxiliaryVariable[4])
                 #print(adres)
                 data =  urlopen(adres).read()
                 pixmap.loadFromData(data)
                 label.setPixmap(pixmap.scaled(260,158))
-                layouttytul.addWidget(label)
+                TitleLayout.addWidget(label)
 
-                tyul = QLabel(pomocnicza[1].replace("<q>", '"').replace("</q>", '"'))
+                tyul = QLabel(auxiliaryVariable[1].replace("<q>", '"').replace("</q>", '"'))
                 tyul.setStyleSheet("font: 25px Times New Roman; font-weight: 800")
-                layouttytul.addWidget(tyul)
+                TitleLayout.addWidget(tyul)
                 
                 label = QLabel()
                 pixmap = QPixmap()
-                adres = str(globalURL+pomocnicza[5])
+                adres = str(globalURL+auxiliaryVariable[5])
                 data =  urlopen(adres).read()
                 pixmap.loadFromData(data)
                 label.setPixmap(pixmap.scaled(260,158))
                 
-                layouttytul.addWidget(label)
+                TitleLayout.addWidget(label)
 
-                layoutdodatek.addLayout(layouttytul)
-                opis = QLabel(str(pomocnicza[9]).replace("<b>", "").replace("</b>", ""))
-                opis.setStyleSheet("font: 16px")
-                opis.setWordWrap(True)
-                layoutopisy.addWidget(opis)
+                AddonsLayout.addLayout(TitleLayout)
+                Description = QLabel(str(auxiliaryVariable[9]).replace("<b>", "").replace("</b>", ""))
+                Description.setStyleSheet("font: 16px")
+                Description.setWordWrap(True)
+                DescLayout.addWidget(Description)
                 
-                layoutdodatek.addLayout(layoutopisy)
-                wersja = pomocnicza[6]
-                wersja = wersja.split(" ")
-                version = QLabel(pomocnicza[6])
+                AddonsLayout.addLayout(DescLayout)
+                Version = auxiliaryVariable[6]
+                Version = Version.split(" ")
+                version = QLabel(auxiliaryVariable[6])
                 version.setStyleSheet("font: 16px")  
-                layoutprzycisk.addWidget(version)  
-                przycisk_sprawdz_wiecej = QPushButton("&Instaluj!", self)
-                przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #082567; color: white")
-                przycisk_sprawdz_wiecej.clicked.connect(lambda: self.instaluj(id, pomocnicza[10]))
+                ButtonLayout.addWidget(version)  
+                ButtonCheckMore = QPushButton("&Instaluj!", self)
+                ButtonCheckMore.setStyleSheet("height: 25px; background-color: #082567; color: white")
+                ButtonCheckMore.clicked.connect(lambda: self.Install(id, auxiliaryVariable[10]))
                 #TODO: do ogarnięcia, żeby id szło poprawne :P
-                #przycisk_sprawdz_wiecej.setFocusPolicy()
-                if SprawdzCzyZainstalowany(sciezka_roota_programu, id):
-                    przycisk_sprawdz_wiecej.setDisabled(True)
-                    przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #808080; color: white")
-                layoutprzycisk.addWidget(przycisk_sprawdz_wiecej)
-                layoutdodatek.addLayout(layoutprzycisk)
+                #ButtonCheckMore.setFocusPolicy()
+                if IsInstall(path_program_root, id):
+                    ButtonCheckMore.setDisabled(True)
+                    ButtonCheckMore.setStyleSheet("height: 25px; background-color: #808080; color: white")
+                ButtonLayout.addWidget(ButtonCheckMore)
+                AddonsLayout.addLayout(ButtonLayout)
 
-                layoutenty = QHBoxLayout()
-                layoutenty.setDirection(2)
-                authors = QLabel("Autorzy: "+pomocnicza[7])
+                MoreLayout = QHBoxLayout()
+                MoreLayout.setDirection(2)
+                authors = QLabel("Autorzy: "+auxiliaryVariable[7])
                 authors.setStyleSheet("font: 16px; line-height: 28px")
-                layoutenty.addWidget(authors)
-                ReleaseDate = QLabel("Data wydania: "+pomocnicza[12])
+                MoreLayout.addWidget(authors)
+                ReleaseDate = QLabel("Data wydania: "+auxiliaryVariable[12])
                 ReleaseDate.setStyleSheet("font: 16px")
-                layoutenty.addWidget(ReleaseDate)
-                if SprawdzCzyZainstalowany(sciezka_roota, id):
-                    #string = PodajDateInstalacji(sciezka_roota, id)
-                    InstallDate = QLabel("Data instalacji: "+str(PodajDateInstalacji(sciezka_roota_programu, id)))
+                MoreLayout.addWidget(ReleaseDate)
+                if IsInstall(path_simulator_root, id):
+                    #string = TakeInstallDate(path_simulator_root, id)
+                    InstallDate = QLabel("Data instalacji: "+str(TakeInstallDate(path_program_root, id)))
                     InstallDate.setStyleSheet("font: 16px;")
-                    layoutenty.addWidget(InstallDate)
+                    MoreLayout.addWidget(InstallDate)
 
-                layoutdodatek.addLayout(layoutenty)
+                AddonsLayout.addLayout(MoreLayout)
 
-                frame.setLayout(layoutdodatek)
+                frame.setLayout(AddonsLayout)
                 frame.setStyleSheet("color: white")
-                aktualnyklucz = pomocnicza[2]
-                aktualnyklucz = aktualnyklucz.replace(" ", "")
-                aktualnyklucz = int(aktualnyklucz)
+                CurrectKey = auxiliaryVariable[2]
+                CurrectKey = CurrectKey.replace(" ", "")
+                CurrectKey = int(CurrectKey)
 
 
                 formLayout.addRow(frame)
@@ -755,33 +753,33 @@ class menedzer(QWidget):
 
 
 
-        layoutkolejny.addWidget(scroll)
-        layoutV.addLayout(layoutkolejny)
+        NextLayout.addWidget(scroll)
+        layoutV.addLayout(NextLayout)
       
 
-        napis2 = QLabel(self)
-        napis2.setText(zmiennaCopyright)
-        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
-        layoutpomocniczy = QHBoxLayout()
-        layoutpomocniczy.addWidget(napis2)
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        HelpingLayout = QHBoxLayout()
+        HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-        layoutpomocniczy.addWidget(version)
-        #layoutpomocniczy.addSpacing(50)
-        layoutV.addLayout(layoutpomocniczy)
+        HelpingLayout.addWidget(version)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
 
-    def pokazwybrane(self, klucz):
+    def ViewChoose(self, Key):
         self.clearLayout(layoutV)
-        sciezka_roota = PodajSciezkeSymulatora()
-        mojawersja = sprawdzwersje(sciezka_roota, globalURL)
-        #print(mojawersja)
+        path_simulator_root = TakePathSimulator()
+        MyVersion = TakeMyVersion(path_simulator_root, globalURL)
+        #print(MyVersion)
         #http://stapox.cal24.pl/files/menedzer_dodatki.php
 
         layout = QHBoxLayout()
-        dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
-        layout.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(self.dzialanie)
+        addPushButton = QPushButton("&Home", self)
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        layout.addWidget(addPushButton)
+        addPushButton.clicked.connect(self.ActionFunction)
 
         label = QLabel(self)
         url = globalURL+"img/logo_maszyna.gif"  
@@ -793,17 +791,17 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-        napis = QLabel(self)
-        napis.setText("Menedżer nieoficjalnych dodatków")
-        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-        napis.move(400, 25)
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.move(400, 25)
 
-        layout.addWidget(napis)
+        layout.addWidget(inscription)
 
         layoutV.addLayout(layout)
 
         
-        layoutkolejny = QHBoxLayout()
+        NextLayout = QHBoxLayout()
         
         response = requests.get(globalURL+"files/menedzer_dodatki.php")
         data = response.text
@@ -822,59 +820,59 @@ class menedzer(QWidget):
             if i == "":
                 break
             frame = QFrame()
-            pomocnicza = str(i).split('$')
-            aktualneid = pomocnicza[0].replace(" ", "")
-            layoutdodatek = QHBoxLayout()
-            layoutprzycisk = QHBoxLayout()
-            layoutopisy = QHBoxLayout()
-            layoutdodatek.setDirection(2)
+            auxiliaryVariable = str(i).split('$')
+            CurrentId = auxiliaryVariable[0].replace(" ", "")
+            AddonsLayout = QHBoxLayout()
+            ButtonLayout = QHBoxLayout()
+            DescLayout = QHBoxLayout()
+            AddonsLayout.setDirection(2)
             
-            tyul = QLabel(pomocnicza[1].replace("<q>", '"').replace("</q>", '"'))
+            tyul = QLabel(auxiliaryVariable[1].replace("<q>", '"').replace("</q>", '"'))
             tyul.setStyleSheet("font: 25px Times New Roman; font-weight: 800")
-            layoutdodatek.addWidget(tyul)
+            AddonsLayout.addWidget(tyul)
             
             #QLabel().setPixmap(QPixmap().loadFromData(urlopen(adres).read()))
             label = QLabel()
             pixmap = QPixmap()
-            adres = str(globalURL+pomocnicza[3])
+            adres = str(globalURL+auxiliaryVariable[3])
             #print(adres)
             data =  urlopen(adres).read()
             pixmap.loadFromData(data)
             label.setPixmap(pixmap)
             #label.move(20,15)
-            layoutopisy.addWidget(label)
-            opis = QLabel(pomocnicza[8])
-            opis.setWordWrap(True)
-            layoutopisy.addWidget(opis)
+            DescLayout.addWidget(label)
+            Description = QLabel(auxiliaryVariable[8])
+            Description.setWordWrap(True)
+            DescLayout.addWidget(Description)
             
-            layoutdodatek.addLayout(layoutopisy)
-            wersja = pomocnicza[6]
-            wersja = wersja.split(" ")
-            layoutprzycisk.addWidget(QLabel(pomocnicza[6]))
-            id = int(pomocnicza[0])
-            przycisk_sprawdz_wiecej = QPushButton("&Dowiedz się więcej i instaluj! ("+str(id)+")", self)
-            przycisk_sprawdz_wiecej.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
-            przycisk_sprawdz_wiecej.clicked.connect(lambda: self.pokazszczegoly(0))
+            AddonsLayout.addLayout(DescLayout)
+            Version = auxiliaryVariable[6]
+            Version = Version.split(" ")
+            ButtonLayout.addWidget(QLabel(auxiliaryVariable[6]))
+            id = int(auxiliaryVariable[0])
+            ButtonCheckMore = QPushButton("&Dowiedz się więcej i instaluj! ("+str(id)+")", self)
+            ButtonCheckMore.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
+            ButtonCheckMore.clicked.connect(lambda: self.ViewDetails(0))
             #TODO: do ogarnięcia, żeby id szło poprawne :P
-            #przycisk_sprawdz_wiecej.setFocusPolicy()
-            layoutprzycisk.addWidget(przycisk_sprawdz_wiecej)
-            layoutdodatek.addLayout(layoutprzycisk)
-            frame.setLayout(layoutdodatek)
+            #ButtonCheckMore.setFocusPolicy()
+            ButtonLayout.addWidget(ButtonCheckMore)
+            AddonsLayout.addLayout(ButtonLayout)
+            frame.setLayout(AddonsLayout)
             frame.setStyleSheet("background-color: #999999; border-radius: 8px")
-            aktualnyklucz = pomocnicza[2]
-            aktualnyklucz = aktualnyklucz.replace(" ", "")
-            aktualnyklucz = int(aktualnyklucz)
-            if mojawersja != -1 and mojawersja == wersja[1] or mojawersja == -1 and aktualnyklucz == klucz:
+            CurrectKey = auxiliaryVariable[2]
+            CurrectKey = CurrectKey.replace(" ", "")
+            CurrectKey = int(CurrectKey)
+            if MyVersion != -1 and MyVersion == Version[1] or MyVersion == -1 and CurrectKey == Key:
 
                 formLayout.addRow(frame)
                 
-                tablicazezwolen[aktualnyklucz-1] = tablicazezwolen[aktualnyklucz-1]+1
-                #print(tablicazezwolen[0])
-            elif mojawersja != -1 and mojawersja == wersja[1] or mojawersja == -1 and klucz == -1:
+                PermissionArray[CurrectKey-1] = PermissionArray[CurrectKey-1]+1
+                #print(PermissionArray[0])
+            elif MyVersion != -1 and MyVersion == Version[1] or MyVersion == -1 and Key == -1:
                 formLayout.addRow(frame)
                 
-                tablicazezwolen[aktualnyklucz-1] = tablicazezwolen[aktualnyklucz-1]+1
-            if(aktualneid == 1):
+                PermissionArray[CurrectKey-1] = PermissionArray[CurrectKey-1]+1
+            if(CurrentId == 1):
                 break
 
                 
@@ -900,99 +898,99 @@ class menedzer(QWidget):
         scroll_area.setBaseSize(300,400)
         scroll_area.setLayout(layout3)
 
-        dodajBtn = QPushButton("&Instaluj wszystkie", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #082567; color: white")
-        layout3.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(lambda: self.ScreenInstallAllAddons())
-        dodajBtn = QPushButton("Pokaż &wszystkie", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-        layout3.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(self.dzialanie)
+        addPushButton = QPushButton("&Instaluj wszystkie", self)
+        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #082567; color: white")
+        layout3.addWidget(addPushButton)
+        addPushButton.clicked.connect(lambda: self.ScreenInstallAllAddons())
+        addPushButton = QPushButton("Pokaż &wszystkie", self)
+        addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+        layout3.addWidget(addPushButton)
+        addPushButton.clicked.connect(self.ActionFunction)
         
         
         
-        if tablicazezwolen[0] != 0:
-            dodajBtn = QPushButton("Lokomotywy &elektryczne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[1] != 0:
-            dodajBtn = QPushButton("Lokomotywy &spalinowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[2] !=0:
-            dodajBtn = QPushButton("Lokomotywy &parowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[3] !=0:
-            dodajBtn = QPushButton("Wagony &osobowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[4] !=0:
-            dodajBtn = QPushButton("Wagony &towarowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[5] !=0:
-            dodajBtn = QPushButton("P&ojazdy specjalne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[7] !=0:
-            dodajBtn = QPushButton("Elektryczne &zespoły trakcyjne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[8] !=0:
-            dodajBtn = QPushButton("Spalino&we zespoły trakcyjne", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[9] !=0:
-            dodajBtn = QPushButton("Wagony &akumulatorowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[10] !=0:
-            dodajBtn = QPushButton("Wagony &motorowe", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
-        if tablicazezwolen[6] !=0:
-            dodajBtn = QPushButton("S&cenerie", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
-            layout3.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(self.dzialanie)
+        if PermissionArray[0] != 0:
+            addPushButton = QPushButton("Lokomotywy &elektryczne", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[1] != 0:
+            addPushButton = QPushButton("Lokomotywy &spalinowe", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[2] !=0:
+            addPushButton = QPushButton("Lokomotywy &parowe", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[3] !=0:
+            addPushButton = QPushButton("Wagony &osobowe", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[4] !=0:
+            addPushButton = QPushButton("Wagony &towarowe", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[5] !=0:
+            addPushButton = QPushButton("P&ojazdy specjalne", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[7] !=0:
+            addPushButton = QPushButton("Elektryczne &zespoły trakcyjne", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[8] !=0:
+            addPushButton = QPushButton("Spalino&we zespoły trakcyjne", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[9] !=0:
+            addPushButton = QPushButton("Wagony &akumulatorowe", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[10] !=0:
+            addPushButton = QPushButton("Wagony &motorowe", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+        if PermissionArray[6] !=0:
+            addPushButton = QPushButton("S&cenerie", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            layout3.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
 
         
 
 
         
-        layoutkolejny.addWidget(scroll_area)
-        layoutkolejny.addWidget(scroll)
-        layoutV.addLayout(layoutkolejny)
+        NextLayout.addWidget(scroll_area)
+        NextLayout.addWidget(scroll)
+        layoutV.addLayout(NextLayout)
       
 
-        napis2 = QLabel(self)
-        napis2.setText(zmiennaCopyright)
-        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
-        layoutpomocniczy = QHBoxLayout()
-        layoutpomocniczy.addWidget(napis2)
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        HelpingLayout = QHBoxLayout()
+        HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-        layoutpomocniczy.addWidget(version)
-        #layoutpomocniczy.addSpacing(50)
-        layoutV.addLayout(layoutpomocniczy)
+        HelpingLayout.addWidget(version)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
 
-    def funkcja2(self):
+    def Function2(self):
         layout = QHBoxLayout()
-        dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
-        layout.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(self.dzialanie)
+        addPushButton = QPushButton("&Home", self)
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        layout.addWidget(addPushButton)
+        addPushButton.clicked.connect(self.ActionFunction)
 
         label = QLabel(self)
         url = globalURL+"img/logo_maszyna.gif"  
@@ -1004,80 +1002,80 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-        napis = QLabel(self)
-        napis.setText("Menedżer nieoficjalnych dodatków")
-        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-        napis.move(400, 25)
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.move(400, 25)
 
-        layout.addWidget(napis)
+        layout.addWidget(inscription)
 
         layoutV.addLayout(layout)
 
         layout2 = QHBoxLayout()
 
-        zdjecie = QLabel(self)
+        Image = QLabel(self)
         url2 = globalURL+"img/skrin-o-zespole.jpg"
         data =  urlopen(url2).read()
         pixmap3 = QPixmap()
         pixmap3.loadFromData(data)
         #  pixmap4 = pixmap3.scaled(755, 425)
-        zdjecie.setPixmap(pixmap3)
-        zdjecie.move(0,125)
+        Image.setPixmap(pixmap3)
+        Image.move(0,125)
         
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
 
-        napis5 = QLabel(self)
-        napis5.setText("O Zespole")
-        napis5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
-        layout3.addWidget(napis5)
+        inscription5 = QLabel(self)
+        inscription5.setText("O Zespole")
+        inscription5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
+        layout3.addWidget(inscription5)
 
         response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
         data = response.text
         data = data.replace('\n', ' ')
         i = 0
-        flagaoprojekcie = False
+        ProjectBool = False
         text = data.split(' ')
         textpl = ""
         for s in text:
-            if flagaoprojekcie:
+            if ProjectBool:
                 if s == "[KONT]":
-                    flagaoprojekcie = False
+                    ProjectBool = False
                     break
                 textpl = textpl+' '+s
             if s == "[OZ]":
-                flagaoprojekcie = True
+                ProjectBool = True
                 #print("rozpoczalem_wydzielac")
         
         #print(textpl[5:len(textpl)-2])
 
-        napisPL = QLabel(self)
-        napisPL.setText(textpl[5:len(textpl)-1])
-        napisPL.setStyleSheet("font: 16pt Times New Roman; color: white")
-        napisPL.setWordWrap(True)
-        layout3.addWidget(napisPL)
+        inscriptionPL = QLabel(self)
+        inscriptionPL.setText(textpl[5:len(textpl)-1])
+        inscriptionPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL.setWordWrap(True)
+        layout3.addWidget(inscriptionPL)
         layout2.addLayout(layout3)
-        layout2.addWidget(zdjecie)
+        layout2.addWidget(Image)
         
         layoutV.addLayout(layout2)
 
-        napis2 = QLabel(self)
-        napis2.setText(zmiennaCopyright)
-        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
-        layoutpomocniczy = QHBoxLayout()
-        layoutpomocniczy.addWidget(napis2)
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        HelpingLayout = QHBoxLayout()
+        HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-        layoutpomocniczy.addWidget(version)
-        #layoutpomocniczy.addSpacing(50)
-        layoutV.addLayout(layoutpomocniczy)
+        HelpingLayout.addWidget(version)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
 
-    def funkcja3(self):
+    def Function3(self):
         layout = QHBoxLayout()
-        dodajBtn = QPushButton("&Home", self)
-        dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
-        layout.addWidget(dodajBtn)
-        dodajBtn.clicked.connect(self.dzialanie)
+        addPushButton = QPushButton("&Home", self)
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        layout.addWidget(addPushButton)
+        addPushButton.clicked.connect(self.ActionFunction)
 
         label = QLabel(self)
         url = globalURL+"img/logo_maszyna.gif"  
@@ -1089,81 +1087,81 @@ class menedzer(QWidget):
         label.move(20,15)
         layout.addWidget(label)
 
-        napis = QLabel(self)
-        napis.setText("Menedżer nieoficjalnych dodatków")
-        napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-        napis.move(400, 25)
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.move(400, 25)
 
-        layout.addWidget(napis)
+        layout.addWidget(inscription)
 
         layoutV.addLayout(layout)
 
         layout2 = QHBoxLayout()
 
-        zdjecie = QLabel(self)
+        Image = QLabel(self)
         url2 = globalURL+"img/scr-kontakt.jpg"
         data =  urlopen(url2).read()
         pixmap3 = QPixmap()
         pixmap3.loadFromData(data)
         #  pixmap4 = pixmap3.scaled(755, 425)
-        zdjecie.setPixmap(pixmap3)
-        zdjecie.move(0,125)
+        Image.setPixmap(pixmap3)
+        Image.move(0,125)
         
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
 
-        napis5 = QLabel(self)
-        napis5.setText("Kontakt")
-        napis5.setStyleSheet("font: 20pt Times New Roman; color: white; font-weight: 700")
-        layout3.addWidget(napis5)
+        inscription5 = QLabel(self)
+        inscription5.setText("Kontakt")
+        inscription5.setStyleSheet("font: 20pt Times New Roman; color: white; font-weight: 700")
+        layout3.addWidget(inscription5)
 
         response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
         data = response.text
         data = data.replace('\n', ' ')
         i = 0
-        flagaoprojekcie = False
+        ProjectBool = False
         text = data.split(' ')
         textpl = ""
         for s in text:
-            if flagaoprojekcie:
+            if ProjectBool:
                 if s == "[END]":
-                    flagaoprojekcie = False
+                    ProjectBool = False
                     break
                 textpl = textpl+' '+s
             if s == "[KONT]":
-                flagaoprojekcie = True
+                ProjectBool = True
                 #print("rozpoczalem_wydzielac")
         
         #print(textpl[5:len(textpl)-2])
 
-        napisPL = QLabel(self)
+        inscriptionPL = QLabel(self)
         setetx = textpl[5:len(textpl)-1]
         setetx = setetx.split('"')
-        napisPL.setText(setetx[0])
-        napisPL.setStyleSheet("font: 16pt Times New Roman; color: white")
-        napisPL.setWordWrap(True)
+        inscriptionPL.setText(setetx[0])
+        inscriptionPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL.setWordWrap(True)
 
-        napisPL2 = QLabel(self)
-        napisPL2.setText("Mail do uber-admina stapoxa: "+setetx[2])
-        napisPL2.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL2 = QLabel(self)
+        inscriptionPL2.setText("Mail do uber-admina stapoxa: "+setetx[2])
+        inscriptionPL2.setStyleSheet("font: 16pt Times New Roman; color: white")
 
-        layout3.addWidget(napisPL)
-        layout3.addWidget(napisPL2)
+        layout3.addWidget(inscriptionPL)
+        layout3.addWidget(inscriptionPL2)
         layout2.addLayout(layout3)
-        layout2.addWidget(zdjecie)
+        layout2.addWidget(Image)
         
         layoutV.addLayout(layout2)
 
-        napis2 = QLabel(self)
-        napis2.setText(zmiennaCopyright)
-        napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
-        layoutpomocniczy = QHBoxLayout()
-        layoutpomocniczy.addWidget(napis2)
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        HelpingLayout = QHBoxLayout()
+        HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
         version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-        layoutpomocniczy.addWidget(version)
-        #layoutpomocniczy.addSpacing(50)
-        layoutV.addLayout(layoutpomocniczy)
+        HelpingLayout.addWidget(version)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
     
     def InstallAllAddons(self, Ids, progress,Button):
         a=0
@@ -1182,19 +1180,19 @@ class menedzer(QWidget):
                
                 if IdAddons == int(i):
                     a=a+1
-                    Valueprogress = self.funckjainstalacji(word[10],progress,Button,IdAddons,False,many)
+                    Valueprogress = self.InstallFunction(word[10],progress,Button,IdAddons,False,many)
 
                     
 
         QMessageBox.information(self, "Zainstalowano", "Wszystkie dostępne dodatki zostały zainstalowane!", QMessageBox.Ok)
         self.clearLayout(layoutV)
-        self.pokazwybrane(-1)
+        self.ViewChoose(-1)
                #print(IdAddons)
 
     def ScreenInstallAllAddons(self):
-        sciezka_roota = PodajSciezkeSymulatora()
-        version = sprawdzwersje(sciezka_roota, globalURL)
-        sciezka_roota_programu = os.getcwd()
+        path_simulator_root = TakePathSimulator()
+        version = TakeMyVersion(path_simulator_root, globalURL)
+        path_program_root = os.getcwd()
         #print(version)
         Ids = ""
         response = requests.get(globalURL+"files/menedzer_dodatki.php")
@@ -1208,22 +1206,22 @@ class menedzer(QWidget):
             idAddons = int(word[0])
             addonsVer = (word[6].split(' '))[1]
             print(addonsVer)
-            if addonsVer == version and not SprawdzCzyZainstalowany(sciezka_roota_programu, idAddons):
+            if addonsVer == version and not IsInstall(path_program_root, idAddons):
                 Ids = Ids+str(idAddons)+','
         if(Ids[len(Ids)-1:]) == ',':
             Ids = Ids[:len(Ids)-1]
         print(Ids)
         if Ids == "":
-            self.pokazwybrane(-1)
+            self.ViewChoose(-1)
             QMessageBox.information(self, "Błąd!", "Wszystkie dostępne dodatki dla Twojej wersji zostały zainstalowane!", QMessageBox.Ok)
         else:
             progress = QProgressBar()
             self.clearLayout(layoutV)
             layout = QHBoxLayout()
-            dodajBtn = QPushButton("&Wróć", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
-            layout.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(lambda: self.pokazwybrane(-1))
+            addPushButton = QPushButton("&Wróć", self)
+            addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+            layout.addWidget(addPushButton)
+            addPushButton.clicked.connect(lambda: self.ViewChoose(-1))
             label = QLabel(self)
             url = globalURL+"img/logo_maszyna.gif"  
             data = urlopen(url).read()
@@ -1234,20 +1232,20 @@ class menedzer(QWidget):
             label.move(20,15)
             layout.addWidget(label)
 
-            napis = QLabel(self)
-            napis.setText("Menedżer nieoficjalnych dodatków")
-            napis.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
-            napis.move(400, 25)
+            inscription = QLabel(self)
+            inscription.setText("Menedżer nieoficjalnych dodatków")
+            inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+            inscription.move(400, 25)
 
-            layout.addWidget(napis)
+            layout.addWidget(inscription)
 
             layoutV.addLayout(layout)
             layoutinstalacji = QHBoxLayout()
             layoutinstalacji.setDirection(2)
-            dodajBtn = QPushButton("&Instaluj!", self)
-            dodajBtn.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
-            layoutinstalacji.addWidget(dodajBtn)
-            dodajBtn.clicked.connect(lambda: self.InstallAllAddons(Ids, progress,dodajBtn))
+            addPushButton = QPushButton("&Instaluj!", self)
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            layoutinstalacji.addWidget(addPushButton)
+            addPushButton.clicked.connect(lambda: self.InstallAllAddons(Ids, progress,addPushButton))
             label = QLabel("Trwa instalowanie, proszę czekać ... ")
             label.setStyleSheet("font: 40px Times New Roman; color: white")
             layoutinstalacji.addWidget(label)
@@ -1265,7 +1263,7 @@ class menedzer(QWidget):
                 word = i.split('$')
                 addonsVer = (word[6].split(' '))[1]
                 print(addonsVer)
-                if addonsVer == version and not SprawdzCzyZainstalowany(sciezka_roota_programu, idAddons):
+                if addonsVer == version and not IsInstall(path_program_root, idAddons):
                     Titles_text = Titles_text+' '+word[1].replace("<q>", "").replace("</q>", "")+",\n"
             if(Titles_text[len(Titles_text)-2:]) == ',\n':
                 Titles_text = Titles_text[:len(Titles_text)-2]
@@ -1278,16 +1276,16 @@ class menedzer(QWidget):
             layoutV.addLayout(layoutinstalacji)
 
             #progress.setValue(50)
-            napis2 = QLabel(self)
-            napis2.setText(zmiennaCopyright)
-            napis2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
-            layoutpomocniczy = QHBoxLayout()
-            layoutpomocniczy.addWidget(napis2)
+            inscription2 = QLabel(self)
+            inscription2.setText(CopyrightText)
+            inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+            HelpingLayout = QHBoxLayout()
+            HelpingLayout.addWidget(inscription2)
             version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
             version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
-            layoutpomocniczy.addWidget(version)
-            #layoutpomocniczy.addSpacing(50)
-            layoutV.addLayout(layoutpomocniczy)
+            HelpingLayout.addWidget(version)
+            #HelpingLayout.addSpacing(50)
+            layoutV.addLayout(HelpingLayout)
 
 
         
