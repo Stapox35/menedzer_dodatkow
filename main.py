@@ -465,7 +465,9 @@ class menedzer(QWidget):
     def ActionFunction(self):
 
         senderVariable = self.sender()   
-       
+
+        print(senderVariable.objectName())  
+
         if senderVariable.text() == "O &projekcie":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
@@ -808,11 +810,8 @@ class menedzer(QWidget):
 
     def ViewDetails(self, id):
         path_simulator_root = TakePathSimulator()
-        if id == 0:
-            id = int(self.sender().text().replace("&Dowiedz się więcej i instaluj! (", "").replace(")", ""))
-        else:
-            id=id
-        print(id)
+        senderVariable = self.sender()   
+        id = int(senderVariable.objectName())
         self.clearLayout(layoutV)
 
         layout = QHBoxLayout()
@@ -910,9 +909,11 @@ class menedzer(QWidget):
                 version = QLabel(auxiliaryVariable[6])
                 version.setStyleSheet("font: 16px")  
                 ButtonLayout.addWidget(version)  
+
                 ButtonCheckMore = QPushButton("&Instaluj!", self)
                 ButtonCheckMore.setStyleSheet("height: 25px; background-color: #082567;  color: "+textcolor1)
                 ButtonCheckMore.clicked.connect(lambda: self.Install(id, auxiliaryVariable[10]))
+
                 #TODO: do ogarnięcia, żeby id szło poprawne :P
                 #ButtonCheckMore.setFocusPolicy()
                 if IsInstall(path_program_root, id):
@@ -1007,6 +1008,7 @@ class menedzer(QWidget):
         layoutV.addLayout(layout)
 
         
+
         NextLayout = QHBoxLayout()
         
         response = requests.get(globalURL+"files/menedzer_dodatki.php")
@@ -1019,8 +1021,8 @@ class menedzer(QWidget):
         #print(data[0])
         formLayout = QFormLayout()
         groupbox = QGroupBox()
-        
-        
+        #print(table)
+        d = 0
 
         for i in data:
             if i == "":
@@ -1056,13 +1058,23 @@ class menedzer(QWidget):
             Version = Version.split(" ")
             ButtonLayout.addWidget(QLabel(auxiliaryVariable[6]))
             id = int(auxiliaryVariable[0])
-            ButtonCheckMore = QPushButton("&Dowiedz się więcej i instaluj! ("+str(id)+")", self)
+            ButtonCheckMore = QPushButton("Dowiedz się więcej!")
+            #ButtonCheckMore = QPushButton("Dowiedz się więcej!")
             ButtonCheckMore.setStyleSheet("height: 25px; background-color: #dc3545;  color: "+textcolor1)
-            ButtonCheckMore.clicked.connect(lambda: self.ViewDetails(0))
+            ButtonCheckMore.setObjectName(str(id))
+            ButtonLayout.addWidget(ButtonCheckMore)
+            ButtonCheckMore.clicked.connect(self.ViewDetails)
+            #ButtonCheckMore.clicked.connect(self.ActionFunction)
+            
+            #ButtonCheckMoreArray.append(ButtonCheckMore)
+
+            
             #TODO: do ogarnięcia, żeby id szło poprawne :P
             #ButtonCheckMore.setFocusPolicy()
-            ButtonLayout.addWidget(ButtonCheckMore)
+
+
             AddonsLayout.addLayout(ButtonLayout)
+            d=d+1
             frame.setLayout(AddonsLayout)
             frame.setStyleSheet("background-color: #999999; border-radius: 8px")
             CurrectKey = auxiliaryVariable[2]
@@ -1113,7 +1125,7 @@ class menedzer(QWidget):
         layout3.addWidget(addPushButton)
         addPushButton.clicked.connect(self.ActionFunction)
         
-        
+        #print(ButtonCheckMoreArray)
         
         if PermissionArray[0] != 0:
             addPushButton = QPushButton("Lokomotywy &elektryczne", self)
