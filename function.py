@@ -1,6 +1,6 @@
 import os
 import requests
-
+import datetime
 def TakeMyVersion(root, globalURL):
     path_rev = root+"/rev.ini"
     if os.path.isfile(path_rev):
@@ -83,3 +83,53 @@ def TakePathSimulator():
             path = linijka[3:]
             path = path.replace(";", "")
             return path
+
+def CheckPathSimulator(path_simulator_root):
+    MaszynaBool = True
+    print(path_simulator_root)
+    if not os.path.isdir(path_simulator_root+"/dynamic"):
+        MaszynaBool = False
+    if not os.path.isdir(path_simulator_root+"/textures"):
+        MaszynaBool = False
+    if not os.path.isdir(path_simulator_root+"/scenery"):
+        MaszynaBool = False
+    return MaszynaBool
+
+def CheckInstallAddons(path_simulator_root, globalURL):
+    root = os.getcwd()
+    x = datetime.datetime.now()
+    path_simulator_root = str(path_simulator_root)
+    path = root+"/.config_men.ini"
+    ini = open(path, "a", encoding="utf-8")
+    response = requests.get(globalURL+"files/menedzer_dodatki.php")
+    data = response.text
+    data = data.replace("<br>", "")
+    data = data.replace("<br/>", "")
+    data = data.replace("<br />", "")
+    data = data.split(';')
+    for i in data:
+        auxiliaryVariable = i.split("$")
+        CurrentId = int(auxiliaryVariable[0])
+        adresRI = auxiliaryVariable[10]
+        VerifyBool = False
+        response = requests.get(adresRI)
+        dataRI = response.text
+        ThisIdBool=True
+        for o in dataRI.split('\n'):
+            o=o.replace("\r", "").replace(" ", "").replace("\t", "")
+            if VerifyBool:
+                if o =="":
+                    VerifyBool = False
+                path = o.split("=")[0]
+                if path != "":
+                    path = path.replace('\\', "/")
+                    print(path_simulator_root+"/"+path)
+                    if not os.path.isfile(path_simulator_root+"/"+path):
+                        ThisIdBool = False  
+            if o[:8] == "[VERIFY]":
+                VerifyBool = True
+        if ThisIdBool == True:
+            ini.write("-a "+str(CurrentId)+"$"+str(1)+"$"+str(x)+";\n")
+        if CurrentId == 1:
+            break
+    ini.close()

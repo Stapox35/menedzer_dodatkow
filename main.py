@@ -7,7 +7,7 @@ if sys.platform[:3] == "win":
     if hasattr(sys, 'frozen'):
         os.environ['PATH'] = sys._MEIPASS + ";" + os.environ['PATH']
 
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout, QScrollArea, QFormLayout, QGroupBox,QFrame,QProgressBar, QFileDialog, QTextEdit
 from shapes import Ksztalty, Ksztalt
 # from PyQt5.QtWidgets import QHBoxLayout2
 from PyQt5.QtGui import QPainter, QColor, QPolygon, QPixmap, QIcon, QImage
@@ -15,7 +15,7 @@ from PyQt5.QtCore import QPoint, QRect, QSize
 from urllib import *
 from urllib.request import urlopen
 import requests
-from function import TakeMyVersion, IsInstall,TakeInstallDate, TakePathSimulator
+from function import TakeMyVersion, IsInstall,TakeInstallDate, TakePathSimulator, CheckPathSimulator, CheckInstallAddons
 import array as arr
 from pyunpack import Archive
 import shutil
@@ -23,6 +23,11 @@ import codecs
 import datetime
 import os as _os
 import subprocess
+
+backgroundcolor = "#007e43"
+buttonscolor = "#00b15e"
+textcolor1 = "white"
+textcolor2 = "black"
 
 
 path_simulator_root = ""
@@ -42,13 +47,213 @@ class menedzer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
     
-        self.interfejs()
-    
+        #self.config()
+        if not os.path.isfile(path_program_root+"/.config_men.ini"):
+            self.interfejs(False)
+        else:
+            self.interfejs(True)
     global layoutOM1, layoutV
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
 
+    def SaveConfig(self, Path7zArea, PathArea):
+        
+        os.remove(path_program_root+"/.config_men.ini")
+        ini = open(path_program_root+"/.config_men.ini", "w+", encoding="utf-8")
+        ini.write("-p "+str(PathArea)+";\n")
+        ini.write("-v "+str(versionMenedzer)+"$"+str(x)+";\n")
+        if Path7zArea == "":
+            ini.write("-z None;\n")
+        else:
+            ini.write("-z "+str(Path7zArea)+";\n")
+       
+        ini.write("[ADDONS]\n")
+        ini.close()
+        CheckInstallAddons(PathArea, globalURL)
+        self.interfejs(True)
+
+    def cancelConfig(self, Path7zArea, PathArea):
+        if sys.platform[:3] == "win":
+            if os.path.isfile(str(Path7zArea)+"/7z.exe") and CheckPathSimulator(str(PathArea)):
+                self.interfejs(True)
+            else:
+                self.interfejs(False)
+        else:
+            if CheckPathSimulator(str(PathArea)):
+                self.interfejs(True)
+            else:
+                self.interfejs(False)
+        
+    def changePathSimulator(self, PathTextArea, ButtonSave):
+        name = QFileDialog.getExistingDirectory(self, "Podaj ścieżkę do symulatora!")
+        PathTextArea.setText(name)
+        if CheckPathSimulator(name):
+            PathTextArea.setStyleSheet("background-color: green; color: "+textcolor1)
+            ButtonSave.setEnabled(True)
+        else:
+            PathTextArea.setStyleSheet("background-color: red; color: "+textcolor1)
+            ButtonSave.setEnabled(False)
+
+    def Autofind7z(self, textArea, ButtonSave):
+        #if sys.platform[:3] == "win":
+        print("WINDOWS")
+        if sys.platform[:3] == "win":
+            if os.path.isfile("C:/Program Files (x86)/7-Zip/7z.exe"):
+                textArea.setText("C:/Program Files (x86)/7-Zip/")
+                textArea.setStyleSheet("background-color: green; color: "+textcolor1)
+                ButtonSave.setEnabled(True)
+            elif os.path.isfile("C:/Program Files/7-Zip/7z.exe"):
+                textArea.setText("C:/Program Files/7-Zip/")
+                textArea.setStyleSheet("background-color: green; color: "+textcolor1)
+                ButtonSave.setEnabled(True)
+            else:
+                QMessageBox.warning(self, "Błąd", "Nie znaleziono 7-zip! Proszę wskazać lokalizację ręcznie!", QMessageBox.Ok)
+                textArea.setStyleSheet("background-color: red; color: "+textcolor1)
+                ButtonSave.setEnabled(False)
+
+    def changePath7z(self, textArea, ButtonSave):
+        if sys.platform[:3] == "win":
+            name = QFileDialog.getExistingDirectory(self, "Podaj ścieżkę do katalogu 7-zip!")
+            if os.path.isfile(name+'/7z.exe'):
+                textArea.setText(name)
+                textArea.setStyleSheet("background-color: green; color: "+textcolor1)
+                ButtonSave.setEnabled(True)
+            else:
+                QMessageBox.warning(self, "Błąd", "Nie znaleziono 7-zip! Proszę spróbować jeszcze raz!", QMessageBox.Ok)
+                textArea.setStyleSheet("background-color: red; color: "+textcolor1)
+                ButtonSave.setEnabled(False)
+
     def config(self):
+        self.clearLayout(layoutV)
+        layoutTitle = QHBoxLayout()
+        url = globalURL+"img/logo_maszyna.gif"  
+        label = QLabel()
+        data = urlopen(url).read()
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        pixmap2 = pixmap.scaled(251, 70)
+        label.setPixmap(pixmap2)
+        layoutTitle.addWidget(label)
+
+        inscription = QLabel(self)
+        inscription.setText("Menedżer nieoficjalnych dodatków")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
+        layoutTitle.addWidget(inscription)
+        layoutV.addLayout(layoutTitle)
+        layoutPath = QHBoxLayout()
+
+        textStarted = QLabel("Konfiguracja menedżera")
+        textStarted.setStyleSheet("font: 35px Times New Roman;  color: "+textcolor1+"; font-weight: 800")
+        layoutV.addWidget(textStarted)
+        '''
+        configFile = QLabel("Plik konfiguracyjny: "+path_program_root+"/.config_men.ini")
+        configFile.setStyleSheet("font: 18px Times New Roman;  color: "+textcolor1+";")
+        layoutV.addWidget(configFile)
+        '''
+
+        configPathLayout = QHBoxLayout()
+        configPathLayout.setDirection(2)
+        textPath = QLabel("Proszę wybrać ścieżkę do głównego katalogu symulatora maszyna")
+        textPath.setStyleSheet("font: 20px Times New Roman;  color: "+textcolor1)
+        layoutV.addWidget(textPath)
+        FolderPath = QTextEdit()
+        #FolderPath.setText("KUPA")
+        FolderPath.setMaximumHeight(35)
+        FolderPath.setMinimumHeight(35)
+        FolderPath.setStyleSheet("color: "+textcolor1)
+        FolderPath.setPlaceholderText("Ścieżka do symulatora")
+        layoutPath.addWidget(FolderPath)
+
+        FolderPathButton = QPushButton("Przeglądaj")
+        FolderPathButton.setStyleSheet("width: 200px; height: 35px; background-color: "+buttonscolor)
+        FolderPathButton.clicked.connect(lambda: self.changePathSimulator(FolderPath, SaveBtn))
+        layoutPath.addWidget(FolderPathButton)
+        #configPathLayout.addLayout(layoutPath)
+        layoutV.addLayout(layoutPath)
+
+        version = QLabel("Wersja menedżera - "+versionMenedzer)
+        version.setStyleSheet("font: 20px Times New Roman;  color: "+textcolor1)
+        layoutV.addWidget(version)
+        sysVer = QLabel()
+        sysVer.setStyleSheet("font: 20px Times New Roman;  color: "+textcolor1)
+        if sys.platform[:3] == "win":
+            if sys.platform[3:5] == "32":
+                sysVer.setText("System: Windows 32-bitowy")
+            if sys.platform[3:5] == "64":
+                sysVer.setText("System: Windows 64-bitowy")
+        elif sys.platform[:5] == "linux":
+            sysVer.setText("System: Linux")
+        else:
+            sysVer.setText("System: "+sys.platform)
+        layoutV.addWidget(sysVer)
+
+        zip7label = QLabel("Program 7-zip")
+        zip7label.setStyleSheet("font: 20px Times New Roman;  color: "+textcolor1)
+        #if windows
+        layoutV.addWidget(zip7label)
+    
+        layout7zip = QHBoxLayout()
+        Folder7zipPath = QTextEdit()
+        Folder7zipPath.setMaximumHeight(35)
+        Folder7zipPath.setMinimumHeight(35)
+        Folder7zipPath.setPlaceholderText("Ścieżka do programu 7-zip")
+        layout7zip.addWidget(Folder7zipPath)
+
+        View7zip = QPushButton("Przeglądaj")
+        View7zip.setStyleSheet("width: 200px; height: 35px; background-color: "+buttonscolor)
+        layout7zip.addWidget(View7zip)
+
+        View7zipAuto = QPushButton("Znajdź automatycznie")
+        View7zipAuto.setStyleSheet("width: 200px; height: 35px; background-color: "+buttonscolor)
+        View7zipAuto.clicked.connect(lambda: self.Autofind7z(Folder7zipPath, SaveBtn))
+        layout7zip.addWidget(View7zipAuto)
+
+        layoutV.addLayout(layout7zip)
+
+        if sys.platform[:3] != "win":
+            View7zip.setEnabled(False)
+            View7zipAuto.setEnabled(False)
+            Folder7zipPath.setEnabled(False)
+            zip7label.setStyleSheet("font: 20px Times New Roman;  color: grey")
+        layoutButtons = QHBoxLayout()
+
+        CancelBtn = QPushButton("&Anuluj")
+        CancelBtn.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
+        layoutButtons.addWidget(CancelBtn)
+        CancelBtn.clicked.connect(lambda: self.cancelConfig(str(Folder7zipPath.toPlainText()), str(FolderPath.toPlainText())))
+
+
+        SaveBtn = QPushButton("&Zapisz ustawienia")
+        SaveBtn.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
+        SaveBtn.clicked.connect(lambda: self.SaveConfig(str(Folder7zipPath.toPlainText()), str(FolderPath.toPlainText())))
+        layoutButtons.addWidget(SaveBtn)
+
+        layoutV.addLayout(layoutButtons)
+
+        inscription2 = QLabel(self)
+        inscription2.setText(CopyrightText)
+        inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
+        HelpingLayout = QHBoxLayout()
+        HelpingLayout.addWidget(inscription2)
+        version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
+        HelpingLayout.addWidget(version)
+        #HelpingLayout.addSpacing(50)
+        layoutV.addLayout(HelpingLayout)
+
+        if os.path.isfile(path_program_root+"/.config_men.ini"):
+            FolderPath.setText(TakePathSimulator())
+            print(TakePathSimulator())
+            if CheckPathSimulator(str(TakePathSimulator())):
+                FolderPath.setStyleSheet("background-color: green; color: "+textcolor1)
+                SaveBtn.setEnabled(True)
+            else:
+                FolderPath.setStyleSheet("background-color: red; color: "+textcolor1)
+                SaveBtn.setEnabled(False)
+
+
+        '''
+
         log = open(path_program_root+"/log_men.txt", "a")
         log.write(path_program_root)
         log.write("\r\n rozpoczynamy config\r\n")
@@ -116,22 +321,22 @@ class menedzer(QWidget):
             QMessageBox.warning(self, "Błąd", "Skonfiguruj jeszcze raz program!", QMessageBox.Ok)
             os.remove(path_program_root+"/.config_men.ini")
             #print(name)
-           
+        
             self.config()
-            '''exit
+            #koment
             self.destroy()
             exit()
-            '''
+        #koment
         #print(path_program_root)
         print(path_simulator_root)
         log.close()
-
+        '''
 
     def NewConfig(self):
-        os.remove(path_program_root+"/.config_men.ini")
         self.config()
 
-    def interfejs(self):
+    def interfejs(self, FlagActive=True):
+        self.clearLayout(layoutV)
         path_program_root = os.getcwd()
         layoutV.setDirection(2)
         layout = QHBoxLayout()
@@ -148,7 +353,7 @@ class menedzer(QWidget):
         
         inscription = QLabel(self)
         inscription.setText("Menedżer nieoficjalnych dodatków")
-        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         inscription.move(400, 25)
 
             
@@ -176,16 +381,17 @@ class menedzer(QWidget):
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
         addPushButton = QPushButton("&Instaluj dodatki", self)
-        addPushButton.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton)
+        addPushButton.setEnabled(FlagActive)
         addPushButton2 = QPushButton("O &projekcie", self)
-        addPushButton2.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        addPushButton2.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton2)
         addPushButton3 = QPushButton("O &zespole", self)
-        addPushButton3.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        addPushButton3.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton3)
         addPushButton4 = QPushButton("&Kontakt", self)
-        addPushButton4.setStyleSheet("width: 200px; height: 75px; background-color: #00b15e")
+        addPushButton4.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton4)
         layout3.setSpacing(32)
         layout2.addLayout(layout3)
@@ -193,19 +399,19 @@ class menedzer(QWidget):
         layoutV.addLayout(layout2)
         inscription2 = QLabel(self)
         inscription2.setText(CopyrightText)
-        inscription2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
+        inscription2.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px")
 
         
         
         HelpingLayout = QHBoxLayout()
 
         configBtn = QPushButton("&Konfiguruj", self)
-        configBtn.setStyleSheet("width: 50px; height: 75px; background-color: #00b15e")
+        configBtn.setStyleSheet("width: 50px; height: 75px; background-color: "+buttonscolor)
         HelpingLayout.addWidget(configBtn)
         configBtn.clicked.connect(self.ActionFunction)
         HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
         HelpingLayout.addWidget(version)
 
 
@@ -219,7 +425,7 @@ class menedzer(QWidget):
        
         inscription3 = QLabel()
         inscription3.setText("O Projekcie")
-        inscription2.setStyleSheet("font: 30pt Times New Roman; color: white; text-align: center; width: 1200px")
+        inscription2.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px")
         layoutOM1.addWidget(inscription3)
 
        
@@ -249,12 +455,12 @@ class menedzer(QWidget):
         self.setFixedSize(1200,675)
         self.setWindowIcon(QIcon(path_program_root+'/icon.ico'))
         print(path_program_root+'/icon.ico')
-        self.setStyleSheet("background-color: #007e43")
+        self.setStyleSheet("background-color: "+backgroundcolor)
         self.setLayout(layoutV)
 
         #self.setLayout(layoutV)
         self.show()
-        self.config()
+        #self.config()
     
     def ActionFunction(self):
 
@@ -348,7 +554,7 @@ class menedzer(QWidget):
     def function1(self):
         layout = QHBoxLayout()
         addPushButton = QPushButton("&Home", self)
-        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
         layout.addWidget(addPushButton)
         addPushButton.clicked.connect(self.ActionFunction)
 
@@ -364,7 +570,7 @@ class menedzer(QWidget):
 
         inscription = QLabel(self)
         inscription.setText("Menedżer nieoficjalnych dodatków")
-        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         inscription.move(400, 25)
 
         layout.addWidget(inscription)
@@ -387,7 +593,7 @@ class menedzer(QWidget):
 
         inscription5 = QLabel(self)
         inscription5.setText("O Projekcie")
-        inscription5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
+        inscription5.setStyleSheet("font: 18pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         layout3.addWidget(inscription5)
 
         response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
@@ -411,7 +617,7 @@ class menedzer(QWidget):
 
         inscriptionPL = QLabel(self)
         inscriptionPL.setText(textpl[5:len(textpl)-1])
-        inscriptionPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL.setStyleSheet("font: 16pt Times New Roman;  color: "+textcolor1)
         inscriptionPL.setWordWrap(True)
         layout3.addWidget(inscriptionPL)
         layout2.addWidget(Image)
@@ -420,11 +626,11 @@ class menedzer(QWidget):
 
         inscription2 = QLabel(self)
         inscription2.setText(CopyrightText)
-        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
         HelpingLayout = QHBoxLayout()
         HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
         HelpingLayout.addWidget(version)
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
@@ -511,7 +717,7 @@ class menedzer(QWidget):
                 QMessageBox.warning(self, "Błąd", "Nie znaleziono 7-zip! Proszę zainstalować!!!", QMessageBox.Ok)
                 self.ViewDetails(id)
                 log.write("\r\n 7zip Brak")
-        if sys.platform[:5]:
+        if sys.platform[:5] == "linux":
             Archive(adresArciwum).extractall(path_simulator_root)
         progress.setValue(progress.value()+14.28*1*multiplier)
         textures = open(path_simulator_root+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
@@ -551,7 +757,7 @@ class menedzer(QWidget):
         self.clearLayout(layoutV)
         layout = QHBoxLayout()
         addPushButton = QPushButton("&Wróć", self)
-        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
         layout.addWidget(addPushButton)
         addPushButton.clicked.connect(lambda: self.ViewDetails(id))
         label = QLabel(self)
@@ -566,7 +772,7 @@ class menedzer(QWidget):
 
         inscription = QLabel(self)
         inscription.setText("Menedżer nieoficjalnych dodatków")
-        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         inscription.move(400, 25)
 
         layout.addWidget(inscription)
@@ -575,11 +781,11 @@ class menedzer(QWidget):
         layoutinstalacji = QHBoxLayout()
         layoutinstalacji.setDirection(2)
         addPushButton = QPushButton("&Instaluj!", self)
-        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
         layoutinstalacji.addWidget(addPushButton)
         addPushButton.clicked.connect(lambda: self.InstallFunction(adres,progress,addPushButton,id,True))
         label = QLabel("Trwa instalowanie, proszę czekać ... ")
-        label.setStyleSheet("font: 40px Times New Roman; color: white")
+        label.setStyleSheet("font: 40px Times New Roman;  color: "+textcolor1)
         layoutinstalacji.addWidget(label)
         
         progress.setGeometry(10,10,500,50)
@@ -589,11 +795,11 @@ class menedzer(QWidget):
         #progress.setValue(50)
         inscription2 = QLabel(self)
         inscription2.setText(CopyrightText)
-        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
         HelpingLayout = QHBoxLayout()
         HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
         HelpingLayout.addWidget(version)
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
@@ -611,7 +817,7 @@ class menedzer(QWidget):
 
         layout = QHBoxLayout()
         addPushButton = QPushButton("&Wróć", self)
-        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
         layout.addWidget(addPushButton)
         addPushButton.clicked.connect(self.ActionFunction)
 
@@ -627,7 +833,7 @@ class menedzer(QWidget):
 
         inscription = QLabel(self)
         inscription.setText("Menedżer nieoficjalnych dodatków")
-        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         inscription.move(400, 25)
 
         layout.addWidget(inscription)
@@ -705,13 +911,13 @@ class menedzer(QWidget):
                 version.setStyleSheet("font: 16px")  
                 ButtonLayout.addWidget(version)  
                 ButtonCheckMore = QPushButton("&Instaluj!", self)
-                ButtonCheckMore.setStyleSheet("height: 25px; background-color: #082567; color: white")
+                ButtonCheckMore.setStyleSheet("height: 25px; background-color: #082567;  color: "+textcolor1)
                 ButtonCheckMore.clicked.connect(lambda: self.Install(id, auxiliaryVariable[10]))
                 #TODO: do ogarnięcia, żeby id szło poprawne :P
                 #ButtonCheckMore.setFocusPolicy()
                 if IsInstall(path_program_root, id):
                     ButtonCheckMore.setDisabled(True)
-                    ButtonCheckMore.setStyleSheet("height: 25px; background-color: #808080; color: white")
+                    ButtonCheckMore.setStyleSheet("height: 25px; background-color: #808080;  color: "+textcolor1)
                 ButtonLayout.addWidget(ButtonCheckMore)
                 AddonsLayout.addLayout(ButtonLayout)
 
@@ -732,7 +938,7 @@ class menedzer(QWidget):
                 AddonsLayout.addLayout(MoreLayout)
 
                 frame.setLayout(AddonsLayout)
-                frame.setStyleSheet("color: white")
+                frame.setStyleSheet(" color: "+textcolor1)
                 CurrectKey = auxiliaryVariable[2]
                 CurrectKey = CurrectKey.replace(" ", "")
                 CurrectKey = int(CurrectKey)
@@ -759,11 +965,11 @@ class menedzer(QWidget):
 
         inscription2 = QLabel(self)
         inscription2.setText(CopyrightText)
-        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
         HelpingLayout = QHBoxLayout()
         HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
         HelpingLayout.addWidget(version)
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
@@ -777,7 +983,7 @@ class menedzer(QWidget):
 
         layout = QHBoxLayout()
         addPushButton = QPushButton("&Home", self)
-        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
         layout.addWidget(addPushButton)
         addPushButton.clicked.connect(self.ActionFunction)
 
@@ -793,7 +999,7 @@ class menedzer(QWidget):
 
         inscription = QLabel(self)
         inscription.setText("Menedżer nieoficjalnych dodatków")
-        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         inscription.move(400, 25)
 
         layout.addWidget(inscription)
@@ -851,7 +1057,7 @@ class menedzer(QWidget):
             ButtonLayout.addWidget(QLabel(auxiliaryVariable[6]))
             id = int(auxiliaryVariable[0])
             ButtonCheckMore = QPushButton("&Dowiedz się więcej i instaluj! ("+str(id)+")", self)
-            ButtonCheckMore.setStyleSheet("height: 25px; background-color: #dc3545; color: white")
+            ButtonCheckMore.setStyleSheet("height: 25px; background-color: #dc3545;  color: "+textcolor1)
             ButtonCheckMore.clicked.connect(lambda: self.ViewDetails(0))
             #TODO: do ogarnięcia, żeby id szło poprawne :P
             #ButtonCheckMore.setFocusPolicy()
@@ -899,11 +1105,11 @@ class menedzer(QWidget):
         scroll_area.setLayout(layout3)
 
         addPushButton = QPushButton("&Instaluj wszystkie", self)
-        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #082567; color: white")
+        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #082567;  color: "+textcolor1)
         layout3.addWidget(addPushButton)
         addPushButton.clicked.connect(lambda: self.ScreenInstallAllAddons())
         addPushButton = QPushButton("Pokaż &wszystkie", self)
-        addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton)
         addPushButton.clicked.connect(self.ActionFunction)
         
@@ -911,57 +1117,57 @@ class menedzer(QWidget):
         
         if PermissionArray[0] != 0:
             addPushButton = QPushButton("Lokomotywy &elektryczne", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[1] != 0:
             addPushButton = QPushButton("Lokomotywy &spalinowe", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[2] !=0:
             addPushButton = QPushButton("Lokomotywy &parowe", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[3] !=0:
             addPushButton = QPushButton("Wagony &osobowe", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[4] !=0:
             addPushButton = QPushButton("Wagony &towarowe", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[5] !=0:
             addPushButton = QPushButton("P&ojazdy specjalne", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[7] !=0:
             addPushButton = QPushButton("Elektryczne &zespoły trakcyjne", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[8] !=0:
             addPushButton = QPushButton("Spalino&we zespoły trakcyjne", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[9] !=0:
             addPushButton = QPushButton("Wagony &akumulatorowe", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[10] !=0:
             addPushButton = QPushButton("Wagony &motorowe", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
         if PermissionArray[6] !=0:
             addPushButton = QPushButton("S&cenerie", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px; background-color: "+buttonscolor)
             layout3.addWidget(addPushButton)
             addPushButton.clicked.connect(self.ActionFunction)
 
@@ -976,11 +1182,11 @@ class menedzer(QWidget):
 
         inscription2 = QLabel(self)
         inscription2.setText(CopyrightText)
-        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
         HelpingLayout = QHBoxLayout()
         HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
         HelpingLayout.addWidget(version)
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
@@ -988,7 +1194,7 @@ class menedzer(QWidget):
     def Function2(self):
         layout = QHBoxLayout()
         addPushButton = QPushButton("&Home", self)
-        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
         layout.addWidget(addPushButton)
         addPushButton.clicked.connect(self.ActionFunction)
 
@@ -1004,7 +1210,7 @@ class menedzer(QWidget):
 
         inscription = QLabel(self)
         inscription.setText("Menedżer nieoficjalnych dodatków")
-        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         inscription.move(400, 25)
 
         layout.addWidget(inscription)
@@ -1027,7 +1233,7 @@ class menedzer(QWidget):
 
         inscription5 = QLabel(self)
         inscription5.setText("O Zespole")
-        inscription5.setStyleSheet("font: 18pt Times New Roman; color: white; font-weight: 700")
+        inscription5.setStyleSheet("font: 18pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         layout3.addWidget(inscription5)
 
         response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
@@ -1051,7 +1257,7 @@ class menedzer(QWidget):
 
         inscriptionPL = QLabel(self)
         inscriptionPL.setText(textpl[5:len(textpl)-1])
-        inscriptionPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL.setStyleSheet("font: 16pt Times New Roman;  color: "+textcolor1)
         inscriptionPL.setWordWrap(True)
         layout3.addWidget(inscriptionPL)
         layout2.addLayout(layout3)
@@ -1061,11 +1267,11 @@ class menedzer(QWidget):
 
         inscription2 = QLabel(self)
         inscription2.setText(CopyrightText)
-        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
         HelpingLayout = QHBoxLayout()
         HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
         HelpingLayout.addWidget(version)
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
@@ -1073,7 +1279,7 @@ class menedzer(QWidget):
     def Function3(self):
         layout = QHBoxLayout()
         addPushButton = QPushButton("&Home", self)
-        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+        addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
         layout.addWidget(addPushButton)
         addPushButton.clicked.connect(self.ActionFunction)
 
@@ -1089,7 +1295,7 @@ class menedzer(QWidget):
 
         inscription = QLabel(self)
         inscription.setText("Menedżer nieoficjalnych dodatków")
-        inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+        inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         inscription.move(400, 25)
 
         layout.addWidget(inscription)
@@ -1112,7 +1318,7 @@ class menedzer(QWidget):
 
         inscription5 = QLabel(self)
         inscription5.setText("Kontakt")
-        inscription5.setStyleSheet("font: 20pt Times New Roman; color: white; font-weight: 700")
+        inscription5.setStyleSheet("font: 20pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
         layout3.addWidget(inscription5)
 
         response = requests.get(globalURL+"files/config_menedzer_serwer.ini")
@@ -1138,12 +1344,12 @@ class menedzer(QWidget):
         setetx = textpl[5:len(textpl)-1]
         setetx = setetx.split('"')
         inscriptionPL.setText(setetx[0])
-        inscriptionPL.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL.setStyleSheet("font: 16pt Times New Roman;  color: "+textcolor1)
         inscriptionPL.setWordWrap(True)
 
         inscriptionPL2 = QLabel(self)
         inscriptionPL2.setText("Mail do uber-admina stapoxa: "+setetx[2])
-        inscriptionPL2.setStyleSheet("font: 16pt Times New Roman; color: white")
+        inscriptionPL2.setStyleSheet("font: 16pt Times New Roman;  color: "+textcolor1)
 
         layout3.addWidget(inscriptionPL)
         layout3.addWidget(inscriptionPL2)
@@ -1154,11 +1360,11 @@ class menedzer(QWidget):
 
         inscription2 = QLabel(self)
         inscription2.setText(CopyrightText)
-        inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+        inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
         HelpingLayout = QHBoxLayout()
         HelpingLayout.addWidget(inscription2)
         version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-        version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+        version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
         HelpingLayout.addWidget(version)
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
@@ -1219,7 +1425,7 @@ class menedzer(QWidget):
             self.clearLayout(layoutV)
             layout = QHBoxLayout()
             addPushButton = QPushButton("&Wróć", self)
-            addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
             layout.addWidget(addPushButton)
             addPushButton.clicked.connect(lambda: self.ViewChoose(-1))
             label = QLabel(self)
@@ -1234,7 +1440,7 @@ class menedzer(QWidget):
 
             inscription = QLabel(self)
             inscription.setText("Menedżer nieoficjalnych dodatków")
-            inscription.setStyleSheet("font: 30pt Times New Roman; color: white; font-weight: 700")
+            inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
             inscription.move(400, 25)
 
             layout.addWidget(inscription)
@@ -1243,11 +1449,11 @@ class menedzer(QWidget):
             layoutinstalacji = QHBoxLayout()
             layoutinstalacji.setDirection(2)
             addPushButton = QPushButton("&Instaluj!", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: #00b15e")
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
             layoutinstalacji.addWidget(addPushButton)
             addPushButton.clicked.connect(lambda: self.InstallAllAddons(Ids, progress,addPushButton))
             label = QLabel("Trwa instalowanie, proszę czekać ... ")
-            label.setStyleSheet("font: 40px Times New Roman; color: white")
+            label.setStyleSheet("font: 40px Times New Roman;  color: "+textcolor1)
             layoutinstalacji.addWidget(label)
             
             progress.setGeometry(10,10,500,50)
@@ -1278,11 +1484,11 @@ class menedzer(QWidget):
             #progress.setValue(50)
             inscription2 = QLabel(self)
             inscription2.setText(CopyrightText)
-            inscription2.setStyleSheet("font: 25pt Times New Roman; color: white; text-align: center; width: 1200px; text-align: jutify")
+            inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
             HelpingLayout = QHBoxLayout()
             HelpingLayout.addWidget(inscription2)
             version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
-            version.setStyleSheet("font: 15pt Times New Roman; color: white; text-align: center;")
+            version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
             HelpingLayout.addWidget(version)
             #HelpingLayout.addSpacing(50)
             layoutV.addLayout(HelpingLayout)
