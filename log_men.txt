@@ -1,1 +1,19 @@
-2019-07-09 19:27:39.148699
+2019-07-09 21:02:33.014542http://stapox.cal24.pl/projekty/ep09-042_powstania_slaskie.7z
+dynamic/pkp/ep09_v1
+ep09
+!=e,ep09
+57
+usuniete
+-a 5$1$2019-07-09 21:02:39.382575;
+
+Zainstalowano
+5http://stapox.cal24.pl/projekty/e483_225_dds_19.04.7z
+dynamic/pkp/e186_v2
+e186
+!=e,e186
+57
+usuniete
+-a 2$1$2019-07-09 21:02:46.702580;
+
+Zainstalowano
+2

@@ -23,6 +23,7 @@ import codecs
 import datetime
 import os as _os
 import subprocess
+import time
 
 backgroundcolor = "#007e43"
 buttonscolor = "#00b15e"
@@ -52,7 +53,7 @@ class menedzer(QWidget):
             self.interfejs(False)
         else:
             self.interfejs(True)
-    global layoutOM1, layoutV
+    global layoutOM1, layoutV, progress,label
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
 
@@ -637,10 +638,11 @@ class menedzer(QWidget):
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
     
-    def InstallFunction(self,adres, progress, Button,id,flaga, multiplier=1):
+    def InstallFunction(self, adres, progress, Button,id,flaga, labeltex, multiplier=1):
         log = open(path_program_root+"/log_men.txt", "a", encoding="utf-8")
         path_simulator_root = TakePathSimulator()
         response = requests.get(adres)
+        labeltex.setText("Trwa instalacja, proszę czekać ...")
         data = response.text
         #progress.setValue(1)
         progress.setValue(progress.value()+14.28*1*multiplier) #14%
@@ -752,8 +754,9 @@ class menedzer(QWidget):
         if not flaga:
             return progress.value()
     def Install(self, id, adres):
-        path_simulator_root = TakePathSimulator()
         progress = QProgressBar()
+        label = QLabel
+        path_simulator_root = TakePathSimulator()
         print(adres)
         adres = adres
         self.clearLayout(layoutV)
@@ -782,11 +785,13 @@ class menedzer(QWidget):
         layoutV.addLayout(layout)
         layoutinstalacji = QHBoxLayout()
         layoutinstalacji.setDirection(2)
-        addPushButton = QPushButton("&Instaluj!", self)
-        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
+        addPushButton = QPushButton("&Instaluj!")
+
+        addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color:  #082567; color: white")
         layoutinstalacji.addWidget(addPushButton)
-        addPushButton.clicked.connect(lambda: self.InstallFunction(adres,progress,addPushButton,id,True))
-        label = QLabel("Trwa instalowanie, proszę czekać ... ")
+        addPushButton.clicked.connect(lambda: self.InstallFunction(adres,progress,addPushButton,id,True,label))
+
+        label.setText("Po naciśnięciu przcisku dodatek zostanie zainstalowany")
         label.setStyleSheet("font: 40px Times New Roman;  color: "+textcolor1)
         layoutinstalacji.addWidget(label)
         
@@ -806,12 +811,17 @@ class menedzer(QWidget):
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
 
+        #time.sleep(1)
+        #self.InstallFunction(adres,progress,addPushButton,id,True)
         #self.InstallFunction(adres, progress)
+
 
     def ViewDetails(self, id):
         path_simulator_root = TakePathSimulator()
-        senderVariable = self.sender()   
-        id = int(senderVariable.objectName())
+        print(str(id))
+        if not id:
+            senderVariable = self.sender()   
+            id = int(senderVariable.objectName())
         self.clearLayout(layoutV)
 
         layout = QHBoxLayout()
@@ -911,8 +921,9 @@ class menedzer(QWidget):
                 ButtonLayout.addWidget(version)  
 
                 ButtonCheckMore = QPushButton("&Instaluj!", self)
-                ButtonCheckMore.setStyleSheet("height: 25px; background-color: #082567;  color: "+textcolor1)
-                ButtonCheckMore.clicked.connect(lambda: self.Install(id, auxiliaryVariable[10]))
+                ButtonCheckMore.setStyleSheet("height: 25px; background-color:  #082567;  color: "+textcolor1)
+                #ButtonCheckMore.clicked.connect(lambda: self.HelpingFunctionInstall(id, auxiliaryVariable[10], None, True, 1))
+                ButtonCheckMore.clicked.connect(lambda: self.Install(id, auxiliaryVariable[10],))
 
                 #TODO: do ogarnięcia, żeby id szło poprawne :P
                 #ButtonCheckMore.setFocusPolicy()
@@ -1060,7 +1071,7 @@ class menedzer(QWidget):
             id = int(auxiliaryVariable[0])
             ButtonCheckMore = QPushButton("Dowiedz się więcej!")
             #ButtonCheckMore = QPushButton("Dowiedz się więcej!")
-            ButtonCheckMore.setStyleSheet("height: 25px; background-color: #dc3545;  color: "+textcolor1)
+            ButtonCheckMore.setStyleSheet("height: 25px; background-color:  #082567;  color: "+textcolor1)
             ButtonCheckMore.setObjectName(str(id))
             ButtonLayout.addWidget(ButtonCheckMore)
             ButtonCheckMore.clicked.connect(self.ViewDetails)
@@ -1381,7 +1392,9 @@ class menedzer(QWidget):
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
     
-    def InstallAllAddons(self, Ids, progress,Button):
+
+
+    def InstallAllAddons(self, Ids, progress,Button,Label):
         a=0
         for i in Ids.split(','):
             if i=="":
@@ -1398,7 +1411,7 @@ class menedzer(QWidget):
                
                 if IdAddons == int(i):
                     a=a+1
-                    Valueprogress = self.InstallFunction(word[10],progress,Button,IdAddons,False,many)
+                    Valueprogress = self.InstallFunction(word[10],progress,Button,IdAddons,False,Label,many)
 
                     
 
@@ -1461,10 +1474,10 @@ class menedzer(QWidget):
             layoutinstalacji = QHBoxLayout()
             layoutinstalacji.setDirection(2)
             addPushButton = QPushButton("&Instaluj!", self)
-            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color: "+buttonscolor)
+            addPushButton.setStyleSheet("width: 100px; height: 50px;  background-color:  #082567; color: white")
             layoutinstalacji.addWidget(addPushButton)
-            addPushButton.clicked.connect(lambda: self.InstallAllAddons(Ids, progress,addPushButton))
-            label = QLabel("Trwa instalowanie, proszę czekać ... ")
+            addPushButton.clicked.connect(lambda: self.InstallAllAddons(Ids, progress,addPushButton,label))
+            label = QLabel("Po naciśnięciu przycisku rozpocznie się instalacja")
             label.setStyleSheet("font: 40px Times New Roman;  color: "+textcolor1)
             layoutinstalacji.addWidget(label)
             
@@ -1473,20 +1486,27 @@ class menedzer(QWidget):
 
             response = requests.get(globalURL+"files/menedzer_dodatki.php")
             data = response.text
-            Titles_text = ""
+            Titles_text = "Lista dodatków, które zostaną zainstalowane: \n"
             for i in data.split(';'):
                 if i=="":
                     break
-
                 word = i.split('$')
                 addonsVer = (word[6].split(' '))[1]
-                print(addonsVer)
-                if addonsVer == version and not IsInstall(path_program_root, idAddons):
+                #print(addonsVer)
+                BollFlag = False
+                for o in Ids.split(','):
+                    #print(o, word[0])
+                    if int(word[0]) == int(o):
+                        BollFlag = True
+                #print(BollFlag)
+                if addonsVer == version and BollFlag:
+                    
                     Titles_text = Titles_text+' '+word[1].replace("<q>", "").replace("</q>", "")+",\n"
             if(Titles_text[len(Titles_text)-2:]) == ',\n':
                 Titles_text = Titles_text[:len(Titles_text)-2]
             Titles = QLabel(Titles_text)
-            Titles.setStyleSheet("Font: 18px")
+            #print(Titles_text)
+            Titles.setStyleSheet("Font: 18px; color: "+textcolor1)
             layoutinstalacji.addWidget(Titles)
 
 
