@@ -37,7 +37,7 @@ globalURL= "http://stapox.cal24.pl/"
 CopyrightText = "Copyright © 2019 stapox"
 PermissionList = [0,0,0,0,0,0,0,0,0,0,0]
 PermissionArray = arr.array('i', PermissionList)
-versionMenedzer = "0.2"
+versionMenedzer = "0.4"
 path_simulator_root = ""
 log = open(path_program_root+"/log_men.txt", "w+")
 x = datetime.datetime.now()
@@ -85,11 +85,16 @@ class menedzer(QWidget):
                     os.system('cd "'+path_program_root+'"')
                     os.system('menedzer-nieoficjalnych-dodatkow.exe')
                 if sys.platform[:5] == "linux":
+                    #os.remove('"'+path_program_root+'/menedzer-nieoficjalnych-dodatkow"')
+                    '''
+                    self.close()
                     Archive(adresArciwum).extractall(path_program_root)
                     shutil.rmtree(TempPath, ignore_errors=True)
-                    self.close()
+                    '''
                     os.system('cd "'+path_program_root+'"')
-                    os.system('./menedzer-nieoficjalnych-dodatkow')
+                    self.close()
+                    os.system('./install')
+                
 
 
         else:
@@ -509,13 +514,13 @@ class menedzer(QWidget):
         addPushButton4 = QPushButton("&Kontakt", self)
         addPushButton4.setStyleSheet("width: 200px; height: 65px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton4)
-
+        '''
         addPushButton5 = QPushButton("&Sprawdź aktualizacje", self)
         addPushButton5.setStyleSheet("width: 200px; height: 65px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton5)
         addPushButton5.setEnabled(FlagActive)
-
-        layout3.setSpacing(15)
+        '''
+        layout3.setSpacing(45)
         layout2.addLayout(layout3)
         
         layoutV.addLayout(layout2)
@@ -558,7 +563,7 @@ class menedzer(QWidget):
         addPushButton2.clicked.connect(self.ActionFunction)
         addPushButton3.clicked.connect(self.ActionFunction)
         addPushButton4.clicked.connect(self.ActionFunction)
-        addPushButton5.clicked.connect(self.ActionFunction)
+        #addPushButton5.clicked.connect(self.ActionFunction)
         layoutX = QVBoxLayout()
         layoutX.setDirection(2)
 
