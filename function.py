@@ -84,6 +84,19 @@ def TakePathSimulator():
             path = path.replace(";", "")
             return path
 
+
+def TakePath7z():
+    root = os.getcwd()
+    path = root+"/.config_men.ini"
+    ini = open(path, "r")
+    for linijka in ini.readlines():
+        linijka = linijka.replace("\n", "")
+        if linijka[:2] == "-z":
+            path = linijka[3:]
+            path = path.replace(";", "")
+            return path
+
+
 def CheckPathSimulator(path_simulator_root):
     MaszynaBool = True
     print(path_simulator_root)

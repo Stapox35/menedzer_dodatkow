@@ -15,7 +15,7 @@ from PyQt5.QtCore import QPoint, QRect, QSize
 from urllib import *
 from urllib.request import urlopen
 import requests
-from function import TakeMyVersion, IsInstall,TakeInstallDate, TakePathSimulator, CheckPathSimulator, CheckInstallAddons
+from function import TakeMyVersion, IsInstall,TakeInstallDate, TakePathSimulator, CheckPathSimulator, CheckInstallAddons, TakePath7z
 import array as arr
 from pyunpack import Archive
 import shutil
@@ -37,7 +37,7 @@ globalURL= "http://stapox.cal24.pl/"
 CopyrightText = "Copyright © 2019 stapox"
 PermissionList = [0,0,0,0,0,0,0,0,0,0,0]
 PermissionArray = arr.array('i', PermissionList)
-versionMenedzer = "0.3L"
+versionMenedzer = "0.2"
 path_simulator_root = ""
 log = open(path_program_root+"/log_men.txt", "w+")
 x = datetime.datetime.now()
@@ -53,13 +53,123 @@ class menedzer(QWidget):
             self.interfejs(False)
         else:
             self.interfejs(True)
+
+        #self.CheckUpgrade()
+
     global layoutOM1, layoutV, progress,label
     layoutOM1 = QVBoxLayout()
     layoutV = QVBoxLayout()
 
+    def installUpgrade(self, link, hash, label):
+        print("install")
+        label.setText("Trwa instalacja")
+        TempPath = path_program_root+"/temp_upgrade/"
+        if not os.path.exists(TempPath):
+            os.makedirs(TempPath)
+        print(link)
+        name = link.split('/')
+        print(name)
+        name = name[len(name)-1]
+        print(name)
+
+        response = requests.get(link, stream=True)
+        if response.status_code == 200:
+            with open(TempPath+name, 'wb') as out:
+                out.write(response.content)
+                adresArciwum = TempPath+name
+                if sys.platform[:3] == "win":
+                    file7z = '"'+TakePath7z()+'/7z.exe x "'+adresArciwum +'" -o"'+path_program_root+'" -y'
+                    subprocess.call(file7z)
+                    shutil.rmtree(TempPath, ignore_errors=True)
+                    self.close()
+                    os.system('cd "'+path_program_root+'"')
+                    os.system('menedzer-nieoficjalnych-dodatkow.exe')
+                if sys.platform[:5] == "linux":
+                    Archive(adresArciwum).extractall(path_program_root)
+                    shutil.rmtree(TempPath, ignore_errors=True)
+                    self.close()
+                    os.system('cd "'+path_program_root+'"')
+                    os.system('./menedzer-nieoficjalnych-dodatkow')
+
+
+        else:
+            print('Request failed: %d' % response.status_code)
+            QMessageBox.warning(self, "Błąd", "Pobieranie aktualizacji nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
+            self.interfejs()
+
+    def CheckUpgrade(self):
+        CurrentVersion = float(versionMenedzer)
+        response = requests.get(globalURL+"files/menedzer_version.php")
+        data = response.text
+        adreswindows = ""
+        adreslinux = ""
+        hashwin = ""
+        hashlinux=""
+        for i in data.split(';'):
+            if i=="":
+                break
+            i = i.replace(" ", "")
+            word = i.split('$')
+            if float(word[1]) > CurrentVersion:
+                CurrentVersion = float(word[1])
+                adreswindows = word[3]
+                hashwin = word[2]
+                adreslinux = word[6]
+                hashlinux = word[5]
+        print(CurrentVersion)
+        if CurrentVersion == float(versionMenedzer):
+            print("Wersja jest aktualna!")
+            QMessageBox.warning(self, "Brak aktualizacji", "Twoja wersja menedżera jest aktualna!", QMessageBox.Ok)
+        else:
+            self.clearLayout(layoutV)
+            layoutTitle = QHBoxLayout()
+            addPushButton = QPushButton("&Home", self)
+            addPushButton.setStyleSheet("width: 100px; height: 75px;  background-color: "+buttonscolor)
+            layoutTitle.addWidget(addPushButton)
+            addPushButton.clicked.connect(self.ActionFunction)
+
+            url = globalURL+"img/logo_maszyna.gif"  
+            label = QLabel()
+            data = urlopen(url).read()
+            pixmap = QPixmap()
+            pixmap.loadFromData(data)
+            pixmap2 = pixmap.scaled(251, 70)
+            label.setPixmap(pixmap2)
+            layoutTitle.addWidget(label)
+
+            inscription = QLabel(self)
+            inscription.setText("Menedżer nieoficjalnych dodatków")
+            inscription.setStyleSheet("font: 30pt Times New Roman;  color: "+textcolor1+"; font-weight: 700")
+            layoutTitle.addWidget(inscription)
+            layoutV.addLayout(layoutTitle)
+            layoutPath = QHBoxLayout()
+
+            labelinstall = QLabel("Po wciśnięciu przycisku nastąpi aktualizacja menedżera")
+            labelinstall.setStyleSheet("color: "+textcolor1+"; font: 30px Times New Roman")
+            layoutV.addWidget(labelinstall)
+            
+
+            buttonInstall = QPushButton("Zainstaluj aktualizacje!")
+            buttonInstall.setStyleSheet("height: 75px; background-color: "+buttonscolor)
+            layoutV.addWidget(buttonInstall)
+            if sys.platform[:3] == "win":
+                buttonInstall.clicked.connect(lambda: self.installUpgrade(adreswindows, hashwin, labelinstall))
+            else:
+                buttonInstall.clicked.connect(lambda: self.installUpgrade(adreslinux, hashlinux, labelinstall))
+            inscription2 = QLabel(self)
+            inscription2.setText(CopyrightText)
+            inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
+            HelpingLayout = QHBoxLayout()
+            HelpingLayout.addWidget(inscription2)
+            version = QLabel("Menedżer nieoficjalnych dodatków v."+versionMenedzer)
+            version.setStyleSheet("font: 15pt Times New Roman;  color: "+textcolor1+"; text-align: center;")
+            HelpingLayout.addWidget(version)
+            #HelpingLayout.addSpacing(50)
+            layoutV.addLayout(HelpingLayout)
+
     def SaveConfig(self, Path7zArea, PathArea):
-        
-        os.remove(path_program_root+"/.config_men.ini")
+        if os.path.isfile(path_program_root+"/.config_men.ini"):
+            os.remove(path_program_root+"/.config_men.ini")
         ini = open(path_program_root+"/.config_men.ini", "w+", encoding="utf-8")
         ini.write("-p "+str(PathArea)+";\n")
         ini.write("-v "+str(versionMenedzer)+"$"+str(x)+";\n")
@@ -154,7 +264,7 @@ class menedzer(QWidget):
 
         configPathLayout = QHBoxLayout()
         configPathLayout.setDirection(2)
-        textPath = QLabel("Proszę wybrać ścieżkę do głównego katalogu symulatora maszyna")
+        textPath = QLabel("Proszę wybrać ścieżkę do głównego katalogu symulatora maszyna:")
         textPath.setStyleSheet("font: 20px Times New Roman;  color: "+textcolor1)
         layoutV.addWidget(textPath)
         FolderPath = QTextEdit()
@@ -162,7 +272,7 @@ class menedzer(QWidget):
         FolderPath.setMaximumHeight(35)
         FolderPath.setMinimumHeight(35)
         FolderPath.setStyleSheet("color: "+textcolor1)
-        FolderPath.setPlaceholderText("Ścieżka do symulatora")
+        #FolderPath.setPlaceholderText("Ścieżka do symulatora")
         layoutPath.addWidget(FolderPath)
 
         FolderPathButton = QPushButton("Przeglądaj")
@@ -178,17 +288,14 @@ class menedzer(QWidget):
         sysVer = QLabel()
         sysVer.setStyleSheet("font: 20px Times New Roman;  color: "+textcolor1)
         if sys.platform[:3] == "win":
-            if sys.platform[3:5] == "32":
-                sysVer.setText("System: Windows 32-bitowy")
-            if sys.platform[3:5] == "64":
-                sysVer.setText("System: Windows 64-bitowy")
+            sysVer.setText("System: Windows")
         elif sys.platform[:5] == "linux":
             sysVer.setText("System: Linux")
         else:
             sysVer.setText("System: "+sys.platform)
         layoutV.addWidget(sysVer)
 
-        zip7label = QLabel("Program 7-zip")
+        zip7label = QLabel("Proszę wybrać ścieżkę do katalogu z programem 7-zip:")
         zip7label.setStyleSheet("font: 20px Times New Roman;  color: "+textcolor1)
         #if windows
         layoutV.addWidget(zip7label)
@@ -197,7 +304,7 @@ class menedzer(QWidget):
         Folder7zipPath = QTextEdit()
         Folder7zipPath.setMaximumHeight(35)
         Folder7zipPath.setMinimumHeight(35)
-        Folder7zipPath.setPlaceholderText("Ścieżka do programu 7-zip")
+        #Folder7zipPath.setPlaceholderText("Ścieżka do programu 7-zip")
         layout7zip.addWidget(Folder7zipPath)
 
         View7zip = QPushButton("Przeglądaj")
@@ -251,7 +358,15 @@ class menedzer(QWidget):
             else:
                 FolderPath.setStyleSheet("background-color: red; color: "+textcolor1)
                 SaveBtn.setEnabled(False)
-
+            if os.path.isfile(TakePath7z()+"/7z.exe") and sys.platform[:3] == "win":
+                Folder7zipPath.setText(TakePath7z())
+                Folder7zipPath.setStyleSheet("background-color: green; color: "+textcolor1)
+                SaveBtn.setEnabled(True)
+            else:
+                if sys.platform[:3] == "win":
+                    #QMessageBox.warning(self, "Błąd", "Nie znaleziono 7-zip! Proszę wskazać lokalizację ręcznie!", QMessageBox.Ok)
+                    Folder7zipPath.setStyleSheet("background-color: red; color: "+textcolor1)
+                    SaveBtn.setEnabled(False)
 
         '''
 
@@ -382,19 +497,25 @@ class menedzer(QWidget):
         layout3 = QHBoxLayout()
         layout3.setDirection(2)
         addPushButton = QPushButton("&Instaluj dodatki", self)
-        addPushButton.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
+        addPushButton.setStyleSheet("width: 200px; height: 65px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton)
         addPushButton.setEnabled(FlagActive)
         addPushButton2 = QPushButton("O &projekcie", self)
-        addPushButton2.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
+        addPushButton2.setStyleSheet("width: 200px; height: 65px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton2)
         addPushButton3 = QPushButton("O &zespole", self)
-        addPushButton3.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
+        addPushButton3.setStyleSheet("width: 200px; height: 65px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton3)
         addPushButton4 = QPushButton("&Kontakt", self)
-        addPushButton4.setStyleSheet("width: 200px; height: 75px; background-color: "+buttonscolor)
+        addPushButton4.setStyleSheet("width: 200px; height: 65px; background-color: "+buttonscolor)
         layout3.addWidget(addPushButton4)
-        layout3.setSpacing(32)
+
+        addPushButton5 = QPushButton("&Sprawdź aktualizacje", self)
+        addPushButton5.setStyleSheet("width: 200px; height: 65px; background-color: "+buttonscolor)
+        layout3.addWidget(addPushButton5)
+        addPushButton5.setEnabled(FlagActive)
+
+        layout3.setSpacing(15)
         layout2.addLayout(layout3)
         
         layoutV.addLayout(layout2)
@@ -437,7 +558,7 @@ class menedzer(QWidget):
         addPushButton2.clicked.connect(self.ActionFunction)
         addPushButton3.clicked.connect(self.ActionFunction)
         addPushButton4.clicked.connect(self.ActionFunction)
-
+        addPushButton5.clicked.connect(self.ActionFunction)
         layoutX = QVBoxLayout()
         layoutX.setDirection(2)
 
@@ -473,6 +594,10 @@ class menedzer(QWidget):
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
             self.function1()
+        if senderVariable.text() == "&Sprawdź aktualizacje":
+            #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
+            #self.clearLayout(layoutV)
+            self.CheckUpgrade()
         if senderVariable.text() == "O &zespole":
             #QMessageBox.warning(self, "Błąd", "Instalowanie dodatków", QMessageBox.Ok)
             self.clearLayout(layoutV)
@@ -709,20 +834,11 @@ class menedzer(QWidget):
             QMessageBox.warning(self, "Błąd", "Pobieranie dodatku nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
             self.ViewDetails(id)
         if sys.platform[:3] == "win":
-            if os.path.isfile("C:/Program Files (x86)/7-Zip/7z.exe"):
-                log.write("\r\n 7zip x86 ")
-                file7z = '"C:/Program Files (x86)/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+path_simulator_root+'" -y'
+                file7z = '"'+TakePath7z()+'/7z.exe x "'+adresArciwum +'" -o"'+path_simulator_root+'" -y'
                 subprocess.call(file7z)
-            elif os.path.isfile("C:/Program Files/7-Zip/7z.exe"):
-                log.write("\r\n 7zip Programfiles ")
-                file7z='"C:/Program Files/7-Zip/7z.exe" x "'+adresArciwum +'" -o"'+path_simulator_root+'"  -y'
-                subprocess.call(file7z)
-            else:
-                QMessageBox.warning(self, "Błąd", "Nie znaleziono 7-zip! Proszę zainstalować!!!", QMessageBox.Ok)
-                self.ViewDetails(id)
-                log.write("\r\n 7zip Brak")
         if sys.platform[:5] == "linux":
             Archive(adresArciwum).extractall(path_simulator_root)
+
         progress.setValue(progress.value()+14.28*1*multiplier)
         textures = open(path_simulator_root+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
         textures.write("\r\n"+RegTextures)
