@@ -37,7 +37,7 @@ globalURL= "http://stapox.cal24.pl/"
 CopyrightText = "Copyright © 2019 stapox"
 PermissionList = [0,0,0,0,0,0,0,0,0,0,0]
 PermissionArray = arr.array('i', PermissionList)
-versionMenedzer = "0.4"
+versionMenedzer = "0.5"
 path_simulator_root = ""
 log = open(path_program_root+"/log_men.txt", "w+")
 x = datetime.datetime.now()
@@ -839,7 +839,7 @@ class menedzer(QWidget):
             QMessageBox.warning(self, "Błąd", "Pobieranie dodatku nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
             self.ViewDetails(id)
         if sys.platform[:3] == "win":
-                file7z = '"'+TakePath7z()+'/7z.exe x "'+adresArciwum +'" -o"'+path_simulator_root+'" -y'
+                file7z = '"'+TakePath7z()+'/7z.exe" x "'+adresArciwum +'" -o"'+path_simulator_root+'" -y'
                 subprocess.call(file7z)
         if sys.platform[:5] == "linux":
             Archive(adresArciwum).extractall(path_simulator_root)
@@ -1487,16 +1487,22 @@ class menedzer(QWidget):
         inscriptionPL = QLabel(self)
         setetx = textpl[5:len(textpl)-1]
         setetx = setetx.split('"')
+        print(setetx)
         inscriptionPL.setText(setetx[0])
         inscriptionPL.setStyleSheet("font: 16pt Times New Roman;  color: "+textcolor1)
         inscriptionPL.setWordWrap(True)
 
         inscriptionPL2 = QLabel(self)
-        inscriptionPL2.setText("Mail do uber-admina stapoxa: "+setetx[2])
+        inscriptionPL2.setText('Mail do uber-admina stapoxa: <a href=\"mailto:'+setetx[2]+'">'+setetx[2]+'</a>')
         inscriptionPL2.setStyleSheet("font: 16pt Times New Roman;  color: "+textcolor1)
-
+        inscriptionPL2.setOpenExternalLinks(True)
+        inscriptionPL3 = QLabel()
+        inscriptionPL3.setText('Nasz oficjalny fanpage: <a href=\"'+setetx[4]+'\"> Nieoficjalne Dodatki do Maszyny</a>')
+        inscriptionPL3.setStyleSheet("font: 16pt Times New Roman;  color: "+textcolor1)
+        inscriptionPL3.setOpenExternalLinks(True)
         layout3.addWidget(inscriptionPL)
         layout3.addWidget(inscriptionPL2)
+        layout3.addWidget(inscriptionPL3)
         layout2.addLayout(layout3)
         layout2.addWidget(Image)
         
