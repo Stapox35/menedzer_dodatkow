@@ -37,11 +37,11 @@ globalURL= "http://stapox.cal24.pl/"
 CopyrightText = "Copyright © 2019 stapox"
 PermissionList = [0,0,0,0,0,0,0,0,0,0,0]
 PermissionArray = arr.array('i', PermissionList)
-versionMenedzer = "0.5"
+versionMenedzer = "0.6"
 path_simulator_root = ""
 log = open(path_program_root+"/log_men.txt", "w+")
 x = datetime.datetime.now()
-log.write(str(x))
+log.write(str(x)+"\n")
 log.close()
 
 class menedzer(QWidget): 
@@ -153,7 +153,7 @@ class menedzer(QWidget):
             labelinstall.setStyleSheet("color: "+textcolor1+"; font: 30px Times New Roman")
             layoutV.addWidget(labelinstall)
             
-
+            '''
             buttonInstall = QPushButton("Zainstaluj aktualizacje!")
             buttonInstall.setStyleSheet("height: 75px; background-color: "+buttonscolor)
             layoutV.addWidget(buttonInstall)
@@ -161,6 +161,7 @@ class menedzer(QWidget):
                 buttonInstall.clicked.connect(lambda: self.installUpgrade(adreswindows, hashwin, labelinstall))
             else:
                 buttonInstall.clicked.connect(lambda: self.installUpgrade(adreslinux, hashlinux, labelinstall))
+            '''
             inscription2 = QLabel(self)
             inscription2.setText(CopyrightText)
             inscription2.setStyleSheet("font: 25pt Times New Roman;  color: "+textcolor1+"; text-align: center; width: 1200px; text-align: jutify")
@@ -173,19 +174,25 @@ class menedzer(QWidget):
             layoutV.addLayout(HelpingLayout)
 
     def SaveConfig(self, Path7zArea, PathArea):
+        log = open(path_program_root+"/log_men.txt", "a")
         if os.path.isfile(path_program_root+"/.config_men.ini"):
             os.remove(path_program_root+"/.config_men.ini")
+            log.write("Delete old config\r\n")
         ini = open(path_program_root+"/.config_men.ini", "w+", encoding="utf-8")
         ini.write("-p "+str(PathArea)+";\n")
+        log.write("Path simulator from config: "+str(PathArea)+";\n")
         ini.write("-v "+str(versionMenedzer)+"$"+str(x)+";\n")
+        log.write("Version install menager:  "+str(versionMenedzer)+"\n$"+str(x)+";\n")
         if Path7zArea == "":
             ini.write("-z None;\n")
+            log.write("not 7z path\n")
         else:
             ini.write("-z "+str(Path7zArea)+";\n")
-       
+            log.write("7z path:  "+str(Path7zArea)+";\n")
         ini.write("[ADDONS]\n")
         ini.close()
-        CheckInstallAddons(PathArea, globalURL)
+        log.close()
+        CheckInstallAddons(PathArea, globalURL, path_program_root)
         self.interfejs(True)
 
     def cancelConfig(self, Path7zArea, PathArea):
@@ -209,6 +216,19 @@ class menedzer(QWidget):
         else:
             PathTextArea.setStyleSheet("background-color: red; color: "+textcolor1)
             ButtonSave.setEnabled(False)
+
+
+    def changePath7zip(self, PathTextArea, ButtonSave):
+        name = QFileDialog.getExistingDirectory(self, "Podaj ścieżkę do programu 7zip!")
+        PathTextArea.setText(name)
+        os.path.isfile(name+"/7z.exe")
+        if  os.path.isfile(name+"/7z.exe"):
+            PathTextArea.setStyleSheet("background-color: green; color: "+textcolor1)
+            ButtonSave.setEnabled(True)
+        else:
+            PathTextArea.setStyleSheet("background-color: red; color: "+textcolor1)
+            ButtonSave.setEnabled(False)
+
 
     def Autofind7z(self, textArea, ButtonSave):
         #if sys.platform[:3] == "win":
@@ -314,6 +334,7 @@ class menedzer(QWidget):
 
         View7zip = QPushButton("Przeglądaj")
         View7zip.setStyleSheet("width: 200px; height: 35px; background-color: "+buttonscolor)
+        View7zip.clicked.connect(lambda: self.changePath7zip(Folder7zipPath, SaveBtn))
         layout7zip.addWidget(View7zip)
 
         View7zipAuto = QPushButton("Znajdź automatycznie")
@@ -770,7 +791,9 @@ class menedzer(QWidget):
     
     def InstallFunction(self, adres, progress, Button,id,flaga, labeltex, multiplier=1):
         log = open(path_program_root+"/log_men.txt", "a", encoding="utf-8")
+        log.write(str("Install add-ons id: "+str(id)+"\r\n"))
         path_simulator_root = TakePathSimulator()
+        log.write(str("Path simulator: "+path_simulator_root+"\r\n"))
         response = requests.get(adres)
         labeltex.setText("Trwa instalacja, proszę czekać ...")
         data = response.text
@@ -816,14 +839,12 @@ class menedzer(QWidget):
         print(series)
         print(CoorTextures)
         print(RegTextures)
-        log.write(str(LinkVariable+"\r\n"))
-        log.write(str(adrestext+"\r\n"))
-        log.write(str(series+"\r\n"))
-        log.write(str(CoorTextures+"\r\n"))
+        log.write(str("LinkVariable: "+LinkVariable+"\r\n"))
+        log.write(str("Adrestextures: "+adrestext+"\r\n"))
+        log.write(str("Series id: " +series+"\r\n"))
+        log.write(str("Coordinates Textures: "+CoorTextures+"\r\n"))
         progress.setValue(progress.value()+14.28*1*multiplier)
-        
         filename = os.path.basename(LinkVariable)
-
         response = requests.get(LinkVariable, stream=True)
         TempPath = path_simulator_root+"/temp/"
         if not os.path.exists(TempPath):
@@ -839,21 +860,32 @@ class menedzer(QWidget):
             QMessageBox.warning(self, "Błąd", "Pobieranie dodatku nie powiodło się! Proszę spróbować jeszcze raz", QMessageBox.Ok)
             self.ViewDetails(id)
         if sys.platform[:3] == "win":
-                file7z = '"'+TakePath7z()+'/7z.exe" x "'+adresArciwum +'" -o"'+path_simulator_root+'" -y'
-                subprocess.call(file7z)
+            log.write("Platform: win\r\n")
+            log.write("7z path form ini:"+TakePath7z()+ "\r\n")
+            file7z = '"'+TakePath7z()+'/7z.exe" x "'+adresArciwum +'" -o"'+path_simulator_root+'" -y'
+            subprocess.call(file7z)
         if sys.platform[:5] == "linux":
+            log.write("Platform: linux\r\n")
             Archive(adresArciwum).extractall(path_simulator_root)
 
         progress.setValue(progress.value()+14.28*1*multiplier)
-        textures = open(path_simulator_root+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
+        # TODO: if not - create file textures.txt and write a first line
+
+        if not os.path.isfile(path_simulator_root+"/"+adrestext+"/textures.txt"):
+            print("Nie ma pliku textures.txt")
+            log.write(str("Brak pliku textures. Należy wygenerować\r\n"))
+            textures = open(path_simulator_root+"/"+adrestext+"/textures.txt", "w+", encoding="utf-8")
+            textures.write(CoorTextures)
+        else:
+            textures = open(path_simulator_root+"/"+adrestext+"/textures.txt", "a", encoding="utf-8")
         textures.write("\r\n"+RegTextures)
         textures.close()
 
         progress.setValue(progress.value()+14.28*1*multiplier)
         shutil.rmtree(TempPath, ignore_errors=True)
-        log.write("57\r\n")
+        #log.write("57\r\n")
         #os.system("del "+TempPath)
-        log.write("usuniete\r\n")
+        log.write("delete 7z pack from temp folder\r\n")
         
         progress.setValue(multiplier*100)
         print(round(progress.value()/(multiplier*100), 0))
@@ -866,7 +898,7 @@ class menedzer(QWidget):
         response = requests.get(globalURL+"files/menedzer_dodaj.php?id="+str(id))
         data = response.text
 
-        log.write("\r\nZainstalowano\r\n")
+        log.write("Install this addons done!\r\n")
         log.write(str(id))
         log.close()
         if flaga:
@@ -874,6 +906,7 @@ class menedzer(QWidget):
             self.ViewDetails(id)
         if not flaga:
             return progress.value()
+    
     def Install(self, id, adres):
         progress = QProgressBar()
         label = QLabel
@@ -935,7 +968,6 @@ class menedzer(QWidget):
         #time.sleep(1)
         #self.InstallFunction(adres,progress,addPushButton,id,True)
         #self.InstallFunction(adres, progress)
-
 
     def ViewDetails(self, id):
         path_simulator_root = TakePathSimulator()
@@ -1519,8 +1551,6 @@ class menedzer(QWidget):
         #HelpingLayout.addSpacing(50)
         layoutV.addLayout(HelpingLayout)
     
-
-
     def InstallAllAddons(self, Ids, progress,Button,Label):
         a=0
         for i in Ids.split(','):
@@ -1651,12 +1681,6 @@ class menedzer(QWidget):
             HelpingLayout.addWidget(version)
             #HelpingLayout.addSpacing(50)
             layoutV.addLayout(HelpingLayout)
-
-
-        
-
-
-
 
 if __name__ == '__main__':
     import sys

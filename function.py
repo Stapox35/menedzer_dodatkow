@@ -108,7 +108,9 @@ def CheckPathSimulator(path_simulator_root):
         MaszynaBool = False
     return MaszynaBool
 
-def CheckInstallAddons(path_simulator_root, globalURL):
+def CheckInstallAddons(path_simulator_root, globalURL, path_program_root):
+    log = open(path_program_root+"/log_men.txt", "a")
+    log.write("Check install add-ons!\n")
     root = os.getcwd()
     x = datetime.datetime.now()
     path_simulator_root = str(path_simulator_root)
@@ -123,7 +125,9 @@ def CheckInstallAddons(path_simulator_root, globalURL):
     for i in data:
         auxiliaryVariable = i.split("$")
         CurrentId = int(auxiliaryVariable[0])
+        log.write("Active addons id: "+str(CurrentId)+"\n")
         adresRI = auxiliaryVariable[10]
+        log.write("RI path: "+str(adresRI)+"\n")
         VerifyBool = False
         response = requests.get(adresRI)
         dataRI = response.text
@@ -137,12 +141,22 @@ def CheckInstallAddons(path_simulator_root, globalURL):
                 if path != "":
                     path = path.replace('\\', "/")
                     print(path_simulator_root+"/"+path)
+                    log.write(path_simulator_root+"/"+path)
+
                     if not os.path.isfile(path_simulator_root+"/"+path):
                         ThisIdBool = False  
+                        log.write("  not\n")
+                    else: 
+                        log.write("  check\n")
             if o[:8] == "[VERIFY]":
                 VerifyBool = True
         if ThisIdBool == True:
             ini.write("-a "+str(CurrentId)+"$"+str(1)+"$"+str(x)+";\n")
+            log.write("Check this addons\n")
+            log.write("-a "+str(CurrentId)+"$"+str(1)+"$"+str(x)+";\n")
+        else: 
+            log.write("not all files!\n")
         if CurrentId == 1:
             break
     ini.close()
+    log.close()
